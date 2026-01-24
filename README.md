@@ -222,7 +222,7 @@ async with RestClient(KyroConfig()) as client:
 
 ### Example error output
 
-Real tracebacks from a run. `e.status`, `e.response_body`, `e.error_code`, `e.timeout`, and `e.details` are set so you can branch or log without re-calling the API. *(In a terminal or IDE the final exception line is usually highlighted in red; GitHub strips inline styles, so it appears plain here.)*
+Real tracebacks from a run. Each exception carries the relevant attributes (`e.status`, `e.response_body`, `e.error_code`, `e.timeout`, `e.details`)—branch or log right away, no parsing. *(In a terminal or IDE the final exception line is usually highlighted in red; GitHub strips inline styles, so it appears plain here.)*
 
 **`KyroHTTPError`** (4xx/5xx from Kalshi):
 
@@ -267,7 +267,7 @@ kyro.exceptions.KyroConnectionError: Cannot connect to host demo-api.kalshi.co:4
 
 **`KyroValidationError`** (Pydantic schema mismatch, invalid JSON, or bad request body):
 
-```
+```python
 Traceback (most recent call last):
   File "app/main.py", line 9, in main
     m = await client.get("/markets/KXBTC", response_model=Market)
