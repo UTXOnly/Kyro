@@ -52,7 +52,7 @@ pip install -e ".[dev,bench]"
 pytest benchmarks/ -v --benchmark-only
 ```
 
-Put `KALSHI_DEMO=1` (or `KALSHI_PRODUCTION=1`) and, for `get_balance`/`get_orders`, auth vars in `.env` or export them. Install: `pip install -e ".[dev,bench,auth]"`. See **[benchmarks/README.md](benchmarks/README.md)**. `config_from_env` loads `.env` when `kyro[auth]` is installed.
+Put `KALSHI_DEMO=1` (or `KALSHI_PRODUCTION=1`) and, for `get_balance`/`get_orders`, auth vars in `.env` or export them. Install: `pip install -e ".[dev,bench]"`. See **[benchmarks/README.md](benchmarks/README.md)**. `config_from_env` loads `.env` (included in core).
 
 ## Live API smoke test
 
@@ -65,7 +65,7 @@ cp .env.example .env   # edit .env with your production keys
 python scripts/live_api_smoke.py     # always uses production (ignores KALSHI_DEMO)
 ```
 
-**Auth is required.** Put `KALSHI_ACCESS_KEY` and `KALSHI_PRIVATE_KEY` or `KALSHI_PRIVATE_KEY_PATH` in `.env` at project root (copy from `.env.example`). The script loads `.env` from the project root. `KALSHI_PRIVATE_KEY_PATH` may be relative (e.g. `kal_key.pem` or `.kalshi/kal_key.pem`). Install: `pip install -e ".[dev,auth]"`.
+**Auth is required.** Put `KALSHI_ACCESS_KEY` and `KALSHI_PRIVATE_KEY` or `KALSHI_PRIVATE_KEY_PATH` in `.env` at project root (copy from `.env.example`). The script loads `.env` from the project root. `KALSHI_PRIVATE_KEY_PATH` may be relative (e.g. `kal_key.pem` or `.kalshi/kal_key.pem`). Install: `pip install -e ".[dev]"`.
 
 - **Pass = 2xx only.** Any 4xx/5xx or exception is **fail**. We are not testing error handling.
 - **Audit log** — `live_smoke_audit.log` (or `KALSHI_SMOKE_AUDIT_LOG`). `.gitignore`d.
@@ -89,7 +89,7 @@ The script exits with code 1 if any **fail**.
 
 - **`error: externally-managed-environment`** — Create and activate a venv first; do not use `--break-system-packages`.
 
-- **`kyro 0.1.0 does not provide the extra 'auth'`** or **`ModuleNotFoundError: No module named 'cryptography'`** — The installed kyro was built before the `auth` extra existed, so its metadata and deps are stale. Reinstall with the auth extra: `pip uninstall kyro -y && pip install -e ".[dev,auth]"` (or `.[auth]` if you don’t need dev). Quick workaround: `pip install cryptography`.
+- **`ModuleNotFoundError: No module named 'cryptography'`** — Reinstall kyro so core deps are installed: `pip install -e .` or `pip install -e ".[dev]"`.
 
 ## What's tested
 

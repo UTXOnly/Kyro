@@ -36,6 +36,8 @@ pip install -e .
 # or: pip install kyro  (when published)
 ```
 
+Authentication (request signing, `.env` loading) is included in the core package. See [Authentication](#authentication).
+
 On Homebrew Python (macOS) and other [PEP 668](https://peps.python.org/pep-0668/) setups, use a virtual environment first:
 
 ```bash
@@ -66,17 +68,9 @@ cfg = KyroConfig(
     connect_timeout=5.0,
     default_headers={"User-Agent": "MyApp/1.0"},
 )
-
-# Auth: use config_from_env() with KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY (or
-# KALSHI_PRIVATE_KEY_PATH) in .env or exported. Requires: pip install "kyro[auth]". Or pass headers manually:
-cfg = KyroConfig(auth_headers={
-    "KALSHI-ACCESS-KEY": "your-key-id",
-    "KALSHI-ACCESS-TIMESTAMP": "...",
-    "KALSHI-ACCESS-SIGNATURE": "...",
-})
 ```
 
-**Environment variables** (for `config_from_env()`): put these in a `.env` in the current directory (copy from `.env.example`) or export them. With ``pip install "kyro[auth]"``, `.env` is loaded automatically.
+**Environment variables** (for `config_from_env()`): put these in a `.env` in the current directory (copy from `.env.example`) or export them. `.env` is loaded automatically when `config_from_env()` is used.
 
 | Variable | Description |
 |----------|-------------|
@@ -87,7 +81,101 @@ cfg = KyroConfig(auth_headers={
 | `KALSHI_PRIVATE_KEY` | PEM string (use `\n` for newlines in env) |
 | `KALSHI_PRIVATE_KEY_PATH` | Path to `.key` or `.pem` file |
 
-Auth and `.env` loading: ``pip install "kyro[auth]"`` (adds `cryptography`, `python-dotenv`).
+---
+
+## Authentication
+
+Kalshi uses **RSA-PSS request signing**. Each authenticated request must include:
+
+- `KALSHI-ACCESS-KEY` — your API key ID  
+- `KALSHI-ACCESS-TIMESTAMP` — Unix milliseconds  
+- `KALSHI-ACCESS-SIGNATURE` — base64‑encoded signature of `timestamp + method + path` (path without query string), signed with your private key.
+
+Kyro supports three ways to supply auth; **`config_from_env()` is the usual choice.**
+
+### 1. `config_from_env()` (recommended)
+
+Set keys in `.env` or the environment (`.env` is loaded automatically by `config_from_env()`). In `.env` (or export):
+
+```
+KALSHI_ACCESS_KEY=your-key-id
+KALSHI_PRIVATE_KEY_PATH=/path/to/your.pem
+# or inline PEM (use \n for newlines):
+# KALSHI_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+```
+
+Then:
+
+```python
+from kyro import config_from_env, RestClient
+
+cfg = config_from_env()  # or config_from_env(default_demo=True)
+async with RestClient(cfg) as client:
+    bal = await client.get("/portfolio/balance")  # auth added automatically
+```
+
+- **`cryptography`** and **`python-dotenv`** are core dependencies; signing and `.env` loading work with a plain `pip install kyro`.
+- If both `KALSHI_ACCESS_KEY` (or `KALSHI_ACCESS_KEY_ID`) and a private key (from `KALSHI_PRIVATE_KEY` or `KALSHI_PRIVATE_KEY_PATH`) are set, Kyro builds an **auth signer** and attaches the three headers to every request. No extra code.
+- `KALSHI_PRIVATE_KEY_PATH` can be relative to the current working directory (e.g. `kal_key.pem` or `.kalshi/kal_key.pem`).
+- For inline PEM in `.env`, use `\n` for newlines: `KALSHI_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----"`.
+
+### 2. Static `auth_headers` (manual or pre-signed)
+
+If you generate the three headers yourself (e.g. for testing or a custom pipeline):
+
+```python
+from kyro import KyroConfig, RestClient
+
+cfg = KyroConfig(
+    base_url="https://api.elections.kalshi.com/trade-api/v2",
+    auth_headers={
+        "KALSHI-ACCESS-KEY": "your-key-id",
+        "KALSHI-ACCESS-TIMESTAMP": "1737654321000",
+        "KALSHI-ACCESS-SIGNATURE": "base64-signature...",
+    },
+)
+async with RestClient(cfg) as client:
+    ...
+```
+
+**Caveat:** the timestamp must be fresh for each request. Kalshi rejects old timestamps, so static `auth_headers` are only suitable for short-lived runs or when you refresh them yourself. For normal use, prefer `config_from_env()` or an `auth_signer`.
+
+### 3. Custom `auth_signer` (advanced)
+
+You can pass a callable that returns the auth headers per request:
+
+```python
+from kyro import KyroConfig, RestClient
+
+def my_signer(method: str, path: str, body: bytes | None) -> dict[str, str]:
+    # path is the full path (e.g. /trade-api/v2/portfolio/balance), no query string.
+    # Return {"KALSHI-ACCESS-KEY": "...", "KALSHI-ACCESS-TIMESTAMP": "...", "KALSHI-ACCESS-SIGNATURE": "..."}
+    ...
+
+cfg = KyroConfig(base_url="...", auth_signer=my_signer)
+async with RestClient(cfg) as client:
+    ...
+```
+
+- **`auth_signer`** overrides **`auth_headers`**: if both are set, only the signer is used.
+- The signer is called on every request with `(method, path, body)`. Kyro sends whatever headers it returns.
+
+### Which endpoints require auth
+
+| Requires auth | Endpoints |
+|---------------|-----------|
+| **No** | `exchange.get_exchange_status`, `get_exchange_announcements`, `get_exchange_schedule`, `get_series_fee_changes`; all of `markets.*` and `events.*` |
+| **Yes** | `exchange.get_user_data_timestamp`; all of `orders.*` and `portfolio.*` |
+
+Without auth, public endpoints work as usual. Auth-required calls return `401` if the headers are missing or invalid.
+
+### Getting API keys and keys file
+
+1. Log in at [kalshi.com](https://kalshi.com) → **Account** → **API** (or [API Keys](https://trading.kalshi.com/settings/api)).
+2. Create an API key and download the `.pem` (private key). Keep the key ID shown there.
+3. Put `KALSHI_ACCESS_KEY=<key-id>` and `KALSHI_PRIVATE_KEY_PATH=/path/to/file.pem` in `.env`, or use `KALSHI_PRIVATE_KEY` with the PEM string.
+
+**Security:** Do not commit `.env` or `.pem` files. Prefer `KALSHI_PRIVATE_KEY_PATH` to a file outside the repo; avoid storing the raw PEM in env if you can.
 
 ---
 
@@ -102,29 +190,59 @@ async with RestClient(KyroConfig()) as client:
     status = await exchange.get_exchange_status(client)
     await exchange.get_exchange_announcements(client)
     await exchange.get_exchange_schedule(client)
+    await exchange.get_series_fee_changes(client, series_ticker="KXBTC")
 
-    # Markets (ticker = market ticker, e.g. KXBTC-24JAN15; series_ticker = series, e.g. KXBTC)
-    ms = await markets.get_markets(client, limit=10, status="open")
+    # Markets — filters: series_ticker, event_ticker, status, tickers, min/max_*_ts, cursor
+    ms = await markets.get_markets(
+        client, series_ticker="KXBTC", limit=10, status="open"
+    )
+    await markets.get_markets(
+        client, event_ticker="INXD-25", limit=5, status="open"
+    )
     m = await markets.get_market(client, "KXBTC-24JAN15")
     ob = await markets.get_market_orderbook(client, "KXBTC-24JAN15", depth=10)
-    trades = await markets.get_trades(client, ticker="KXBTC-24JAN15", limit=50)
+    trades = await markets.get_trades(
+        client,
+        ticker="KXBTC-24JAN15",
+        limit=50,
+        min_ts=1704067200,
+        max_ts=1735689600,
+    )
     await markets.get_market_candlesticks(
-        client, "KXBTC-24JAN15", series_ticker="KXBTC", period_interval=60
+        client,
+        "KXBTC-24JAN15",
+        series_ticker="KXBTC",
+        period_interval=60,
+        limit=100,
     )
     await markets.get_series(client, "KXBTC")
-    await markets.get_series_list(client, limit=20)
+    await markets.get_series_list(client, limit=20)  # cursor= for pagination
 
-    # Events (event_ticker, e.g. INXD-25, KXBTC)
-    evs = await events.get_events(client, limit=20, status="open")
-    ev = await events.get_event(client, "INXD-25")
+    # Events — filters: series_ticker, status, with_nested_markets, with_milestones, min_close_ts
+    evs = await events.get_events(
+        client,
+        limit=20,
+        status="open",
+        series_ticker="KXBTC",
+        with_nested_markets=True,
+    )
+    ev = await events.get_event(client, "INXD-25", with_nested_markets=True)
     await events.get_event_metadata(client, "INXD-25")
-    await events.get_multivariate_events(client)
+    await events.get_multivariate_events(client, limit=10)
 
-    # Orders (auth; ticker = market ticker. yes_price/no_price 1–99 cents.)
-    ords = await orders.get_orders(client, status="resting", limit=50)
+    # Orders (auth) — filters: ticker, event_ticker, status, min_ts, max_ts, cursor, subaccount
+    ords = await orders.get_orders(
+        client, ticker="KXBTC-24JAN15", status="resting", limit=50
+    )
     o = await orders.get_order(client, "order-id")
     await orders.create_order(
-        client, ticker="KXBTC-24JAN15", side="yes", action="buy", count=1, yes_price=50
+        client,
+        ticker="KXBTC-24JAN15",
+        side="yes",
+        action="buy",
+        count=1,
+        yes_price=50,
+        time_in_force="good_till_canceled",
     )
     await orders.cancel_order(client, "order-id")
     await orders.amend_order(
@@ -136,11 +254,21 @@ async with RestClient(KyroConfig()) as client:
     )
     await orders.batch_cancel_orders(client, ids=["id1", "id2"])
 
-    # Portfolio (auth)
+    # Portfolio (auth) — filters: ticker, event_ticker, min_ts, max_ts, cursor, subaccount
     bal = await portfolio.get_balance(client)
-    pos = await portfolio.get_positions(client, limit=100)
-    await portfolio.get_fills(client, limit=50)
-    await portfolio.get_settlements(client)
+    pos = await portfolio.get_positions(
+        client, ticker="KXBTC-24JAN15", limit=100
+    )
+    await portfolio.get_fills(
+        client,
+        ticker="KXBTC-24JAN15",
+        min_ts=1704067200,
+        max_ts=1735689600,
+        limit=50,
+    )
+    await portfolio.get_settlements(
+        client, event_ticker="INXD-25", limit=50
+    )
     await portfolio.get_total_resting_order_value(client)
 ```
 

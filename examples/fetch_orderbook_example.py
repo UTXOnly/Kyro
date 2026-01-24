@@ -10,7 +10,7 @@ Uses the Kalshi **demo** API by default. For production:
     KALSHI_PRODUCTION=1 python examples/fetch_orderbook_example.py
 
 Auth (optional): set KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY or KALSHI_PRIVATE_KEY_PATH.
-Requires: pip install "kyro[auth]". Public endpoints (events, markets, orderbook) do not need auth.
+Public endpoints (events, markets, orderbook) do not need auth.
 
 If you get ModuleNotFoundError: No module named 'kyro', install from repo root:
     pip install -e .   # or  pip install -e ".[dev]"
@@ -116,8 +116,8 @@ async def main() -> None:
     except KyroHTTPError as e:
         if e.status == 401:
             print(
-                "\n401 (unauthorized). Set KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY (or KALSHI_PRIVATE_KEY_PATH), "
-                'pip install "kyro[auth]", and use config_from_env().',
+                "\n401 (unauthorized). Set KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY (or KALSHI_PRIVATE_KEY_PATH) "
+                "and use config_from_env().",
                 file=sys.stderr,
             )
         raise
