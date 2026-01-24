@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/UTXOnly/kyro/testing/assets/logo.png" alt="Kyro" width="280">
+  <img src="https://raw.githubusercontent.com/UTXOnly/kyro/testing/assets/kyro_logo_transparent.svg" alt="Kyro" width="420">
 </p>
 
 # Kyro
@@ -224,6 +224,12 @@ pytest tests/ -v --cov=kyro --cov-report=term-missing
 ```
 
 If `pip install -e ".[dev]"` fails with **`externally-managed-environment`**, create and activate a venv first; do not use `--break-system-packages`.
+
+---
+
+## ⚠️ Disclaimer ⚠️
+
+The author accepts no responsibility for any use of this software. Kyro is provided as-is. When trading or interacting with live funds via the Kalshi API, always use caution and understand the risks. Prefer the demo environment for testing.
 
 ---
 
