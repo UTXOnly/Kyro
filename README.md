@@ -4,8 +4,12 @@
 
 # Kyro
 
-[![Ruff](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml)
-[![Black](https://github.com/UTXOnly/kyro/actions/workflows/black.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/black.yml)
+<p align="center">
+  [![Ruff](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml)
+  [![Black](https://github.com/UTXOnly/kyro/actions/workflows/black.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/black.yml)
+  [![Tests](https://github.com/UTXOnly/kyro/actions/workflows/test.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/test.yml)
+  [![Benchmarks](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml)
+</p>
 
 Kyro is an async Python client for the Kalshi REST API, built with an emphasis on
 typing, validation, and predictable behavior in async code.
