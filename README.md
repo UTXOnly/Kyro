@@ -31,9 +31,16 @@ Errors are surfaced as explicit exception types: `KyroError` (base), `KyroHTTPEr
 
 ## Install
 
+From PyPI (after a release):
+
+```bash
+pip install kyro
+```
+
+From the repo (development / unreleased):
+
 ```bash
 pip install -e .
-# or: pip install kyro  (when published)
 ```
 
 Authentication (request signing, `.env` loading) is included in the core package. See [Authentication](#authentication).
@@ -42,7 +49,7 @@ On Homebrew Python (macOS) and other [PEP 668](https://peps.python.org/pep-0668/
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e .
+pip install kyro   # or: pip install -e .  for development
 ```
 
 ---
@@ -460,6 +467,7 @@ pytest benchmarks/ -v --benchmark-only
 See [benchmarks/README.md](benchmarks/README.md) for the mock server and options.
 
 **Live API smoke** (every endpoint against the real Kalshi API): `python scripts/live_api_smoke.py` — see [TESTING.md](TESTING.md#live-api-smoke-test).
+
 
 If `pip install -e ".[dev]"` fails with **`externally-managed-environment`**, create and activate a venv first; do not use `--break-system-packages`.
 
