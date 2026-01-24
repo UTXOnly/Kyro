@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "kyro"
 version = "0.1.0"
-description = "Async Kalshi API client (aiohttp, orjson, Pydantic). Library for building apps."
+description = "Async Kalshi API client (aiohttp, Pydantic). Library for building apps."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [{ name = "Kyro" }]
-keywords = ["async", "aiohttp", "kalshi", "rest", "orjson", "pydantic"]
+keywords = ["async", "aiohttp", "kalshi", "rest", "pydantic"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -24,18 +24,24 @@ classifiers = [
 dependencies = [
     "aiohttp>=3.9.0",
     "pydantic>=2.0",
-    "orjson>=3.9.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
     "ruff>=0.1.0",
+]
+auth = [
+    "cryptography>=41.0",
+]
+bench = [
+    "pytest-benchmark>=4.0",
 ]
 
 [project.urls]
-Repository = "https://github.com/your-org/kyro"
+Repository = "https://github.com/UTXOnly/kyro"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -51,3 +57,4 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py", "bench_*.py"]

@@ -1,30 +1,44 @@
-"""JSON serialization and deserialization via orjson and Pydantic.
+"""JSON serialization and deserialization via Pydantic only.
 
-Used by the REST client for request bodies and response parsing. Supports
-raw dicts, Pydantic models, and optional validation into a response type.
+All parsing and serialization goes through Pydantic (no orjson or stdlib json):
+
+- **dumps**: request bodies. BaseModel → model_dump_json; dict/list → TypeAdapter.dump_json.
+- **loads**: raw JSON → dict | list via TypeAdapter. Used when response_model is not
+  set (e.g. error bodies, or until a response model exists). Prefer loads_model when
+  a model exists.
+- **loads_model**: response → Pydantic model via model_validate_json (one parse).
+  Preferred for API responses; map payloads to models.
 """
 
 from __future__ import annotations
 
 from typing import Any, TypeVar
 
-import orjson
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from kyro.exceptions import KyroValidationError
 
 T = TypeVar("T", bound=BaseModel)
 
+# For raw dict/list in/out when no model exists (error bodies, generic payloads).
+_AnyJson = TypeAdapter(dict[str, Any] | list[Any])
+_DictJson = TypeAdapter(dict[str, Any])
+_ListJson = TypeAdapter(list[Any])
+
 
 def dumps(obj: BaseModel | dict[str, Any] | list[Any]) -> bytes:
-    """Serialize to JSON bytes using orjson.
+    """Serialize to JSON bytes using Pydantic.
+
+    BaseModel → model_dump_json; dict/list → TypeAdapter.dump_json.
 
     Args:
-        obj: A Pydantic model (uses :meth:`~pydantic.BaseModel.model_dump`),
-            or a dict/list (passed through to orjson).
+        obj: Pydantic model, or dict/list (e.g. request body before a model exists).
 
     Returns:
-        JSON as bytes, UTF-8 encoded.
+        JSON as bytes, UTF-8.
+
+    Raises:
+        KyroValidationError: If a value is not JSON-serializable (e.g. set, object()).
 
     Example:
         >>> from pydantic import BaseModel
@@ -34,38 +48,46 @@ def dumps(obj: BaseModel | dict[str, Any] | list[Any]) -> bytes:
         >>> dumps({"a": 1})
         b'{"a":1}'
     """
-    if isinstance(obj, BaseModel):
-        data = obj.model_dump(mode="json", exclude_none=False)
-        return orjson.dumps(data)
-    return orjson.dumps(obj)
+    try:
+        if isinstance(obj, BaseModel):
+            return obj.model_dump_json(exclude_none=False).encode("utf-8")
+        if isinstance(obj, dict):
+            return _DictJson.dump_json(obj)
+        if isinstance(obj, list):
+            return _ListJson.dump_json(obj)
+    except KyroValidationError:
+        raise
+    except Exception as e:
+        raise KyroValidationError(f"Failed to serialize: {e}") from e
+    raise TypeError("dumps requires BaseModel, dict, or list")
 
 
-def loads(raw: bytes | str) -> Any:
-    """Deserialize JSON bytes or string to Python objects using orjson.
+def loads(raw: bytes | str) -> dict[str, Any] | list[Any]:
+    """Deserialize JSON to dict or list via Pydantic TypeAdapter.
+
+    Use for error bodies or when no response model exists yet. Prefer
+    loads_model with a concrete model for API responses.
 
     Args:
         raw: JSON as bytes or str.
 
     Returns:
-        Parsed structure (dict, list, etc.). No Pydantic validation.
+        Top-level dict or list.
 
     Raises:
-        KyroValidationError: If orjson fails to parse (invalid JSON).
-
-    Example:
-        >>> loads(b'{"a": 1}')
-        {'a': 1}
+        KyroValidationError: Invalid JSON or top-level not dict/list.
     """
-    if isinstance(raw, str):
-        raw = raw.encode("utf-8")
     try:
-        return orjson.loads(raw)
-    except orjson.JSONDecodeError as e:
+        return _AnyJson.validate_json(raw)
+    except ValidationError as e:
         raise KyroValidationError(f"Invalid JSON: {e}") from e
 
 
 def loads_model(raw: bytes | str, model: type[T]) -> T:
-    """Deserialize JSON into a Pydantic model.
+    """Deserialize JSON into a Pydantic model via model_validate_json.
+
+    Uses Pydantic's direct JSON validation (one parse, no intermediate dict).
+    Accepts str or bytes.
 
     Args:
         raw: JSON as bytes or str.
@@ -82,9 +104,8 @@ def loads_model(raw: bytes | str, model: type[T]) -> T:
         >>> loads_model(b'{"ticker": "KXBTC"}', Market)
         Market(ticker='KXBTC')
     """
-    data = loads(raw)
     try:
-        return model.model_validate(data)
+        return model.model_validate_json(raw)
     except ValidationError as e:
         raise KyroValidationError(
             f"Validation failed for {model.__name__}: {e}",

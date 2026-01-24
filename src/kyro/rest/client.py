@@ -1,12 +1,13 @@
 """Async REST client for the Kalshi API.
 
-Uses aiohttp, orjson, and Pydantic. Built for app integration (library, not CLI).
+Uses aiohttp and Pydantic. Built for app integration (library, not CLI).
 """
 
 from __future__ import annotations
 
 import logging
 from typing import Any, TypeVar
+from urllib.parse import urlparse
 
 import aiohttp
 from pydantic import BaseModel
@@ -32,7 +33,7 @@ class RestClient:
 
     Use as an async context manager. Wraps :class:`KyroSession` and provides
     :meth:`get`, :meth:`post`, :meth:`put`, :meth:`patch`, :meth:`delete` with
-    orjson/Pydantic serialization and Kyro exception handling.
+    Pydantic-based JSON serialization and Kyro exception handling.
 
     Example:
         >>> from kyro import RestClient
@@ -84,15 +85,25 @@ class RestClient:
         response_model: type[T] | None = None,
     ) -> Any:
         session = self._ensure_session()
-        url = path if path.startswith("/") else f"/{path}"
+        # Use a relative path so aiohttp appends to base_url. A leading / would
+        # replace the base path (RFC 3986) and drop /trade-api/v2.
+        url = path.lstrip("/")
         extra_headers: dict[str, str] | None = None
         body: bytes | None = None
         if json is not None:
             try:
                 body = dumps(json)
+            except KyroValidationError:
+                raise
             except Exception as e:
                 raise KyroValidationError(f"Failed to serialize request body: {e}") from e
             extra_headers = {"Content-Type": "application/json"}
+
+        if self._config.auth_signer:
+            base_path = urlparse(str(self._config.base_url)).path.rstrip("/") or "/"
+            full_path = f"{base_path}/{url}" if url else base_path
+            ah = self._config.auth_signer(method, full_path, body)
+            extra_headers = {**(extra_headers or {}), **ah}
 
         try:
             async with session.request(
@@ -109,17 +120,18 @@ class RestClient:
                 str(e) or "Request timed out",
                 timeout=getattr(e, "timeout", None) or self._config.request_timeout,
             ) from e
+        except TimeoutError as e:
+            # aiohttp can raise asyncio.TimeoutError (TimeoutError) on total timeout
+            raise KyroTimeoutError(
+                str(e) or "Request timed out",
+                timeout=self._config.request_timeout,
+            ) from e
         except (aiohttp.ClientError, ConnectionError, OSError) as e:
             raise KyroConnectionError(str(e)) from e
 
         if status >= 400:
             parsed, err_code = self._parse_error_body(raw)
-            raise KyroHTTPError(
-                f"Kalshi API error: {status}",
-                status=status,
-                response_body=parsed,
-                error_code=err_code,
-            )
+            raise KyroHTTPError("Kalshi API error", status=status, response_body=parsed, error_code=err_code)
 
         if not raw:
             return None

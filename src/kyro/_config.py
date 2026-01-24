@@ -6,7 +6,7 @@ the REST client and (later) WebSocket client.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -20,14 +20,14 @@ class KyroConfig(BaseModel):
     Example:
         >>> from kyro import RestClient
         >>> from kyro._config import KyroConfig
-        >>> cfg = KyroConfig(base_url="https://trading-api.kalshi.com/v2")
+        >>> cfg = KyroConfig(base_url="https://api.elections.kalshi.com/trade-api/v2")
         >>> async with RestClient(cfg) as client:
         ...     markets = await client.get("/markets")
     """
 
     base_url: HttpUrl = Field(
-        default="https://trading-api.kalshi.com/v2",
-        description="Kalshi API base URL (production). Use demo base for testing.",
+        default="https://api.elections.kalshi.com/trade-api/v2",
+        description="Kalshi API base URL (production). Use https://demo-api.kalshi.co/trade-api/v2 for demo.",
     )
     request_timeout: float = Field(
         default=30.0,
@@ -48,7 +48,12 @@ class KyroConfig(BaseModel):
     auth_headers: dict[str, str] | None = Field(
         default=None,
         description="Optional Kalshi auth headers (KALSHI-ACCESS-KEY, etc.). "
-        "Set per-request or via an auth helper for signed requests.",
+        "Ignored when auth_signer is set. For request signing, use config_from_env() or auth_signer.",
+    )
+    auth_signer: Callable[[str, str, bytes | None], dict[str, str]] | None = Field(
+        default=None,
+        description="Optional (method, path, body) -> dict of Kalshi auth headers. "
+        "When set, used per-request instead of auth_headers. See kyro.config_from_env().",
     )
 
     model_config = {"frozen": False, "extra": "forbid"}

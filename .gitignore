@@ -1,0 +1,56 @@
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Build and packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Install
+*.manifest
+*.spec
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.benchmarks/
+benchmark_results.txt
+
+# mypy, ruff
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local / secrets (do not commit)
+*.local
+.env.local
+.env.*.local
+
+.kalshi/
+kal_key.pem
+scratchpad

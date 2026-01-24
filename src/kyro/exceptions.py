@@ -40,7 +40,7 @@ class KyroHTTPError(KyroError):
         message: str,
         *,
         status: int,
-        response_body: bytes | str | None = None,
+        response_body: bytes | str | dict | None = None,
         error_code: str | None = None,
         **kwargs: Any,
     ) -> None:
@@ -48,6 +48,24 @@ class KyroHTTPError(KyroError):
         self.status = status
         self.response_body = response_body
         self.error_code = error_code
+
+    def __str__(self) -> str:
+        # Include status, error_code, and response_body so the traceback line
+        # "KyroHTTPError: <this string>" shows everything needed to debug.
+        parts = [f"{self._message}: status={self.status}"]
+        if self.error_code is not None:
+            parts.append(f"error_code={self.error_code!r}")
+        if self.response_body is not None:
+            if isinstance(self.response_body, dict):
+                blurb = str(self.response_body)[:220]
+            elif isinstance(self.response_body, bytes):
+                blurb = self.response_body.decode("utf-8", errors="replace")[:220]
+            else:
+                blurb = str(self.response_body)[:220]
+            if len(blurb) >= 220:
+                blurb += "…"
+            parts.append(f"response_body={blurb!r}")
+        return ", ".join(parts)
 
 
 class KyroConnectionError(KyroError):
