@@ -6,16 +6,11 @@
 
 [![Ruff](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml) [![Black](https://github.com/UTXOnly/kyro/actions/workflows/black.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/black.yml) [![Tests](https://github.com/UTXOnly/kyro/actions/workflows/test.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/test.yml) [![Benchmarks](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml)
 
-Kyro is an async Python client for the Kalshi REST API, built with an emphasis on
-typing, validation, and predictable behavior in async code.
+Kyro is an async Python client library for the Kalshi REST API.
 
-The client uses aiohttp for non-blocking HTTP calls and Pydantic models to
-validate inputs and responses, so API interactions fail early and explicitly
-when something is wrong.
-
-Kyro is structured to mirror Kalshi’s API directly, with minimal abstraction.
-It’s intended to be a typed, programmatic interface — not a framework or a
-trading engine.
+It uses aiohttp for async HTTP requests and Pydantic for request and response
+validation. The library mirrors the API surface closely and exposes a typed,
+low-level interface.
 
 API areas are grouped into:
 - `exchange`
