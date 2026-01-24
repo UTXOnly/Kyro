@@ -103,28 +103,38 @@ async with RestClient(KyroConfig()) as client:
     await exchange.get_exchange_announcements(client)
     await exchange.get_exchange_schedule(client)
 
-    # Markets
+    # Markets (ticker = market ticker, e.g. KXBTC-24JAN15; series_ticker = series, e.g. KXBTC)
     ms = await markets.get_markets(client, limit=10, status="open")
-    m = await markets.get_market(client, "KXBTC")
-    ob = await markets.get_market_orderbook(client, "KXBTC", depth=10)
-    trades = await markets.get_trades(client, ticker="KXBTC", limit=50)
-    await markets.get_market_candlesticks(client, "KXBTC-24JAN15", series_ticker="KXBTC", period_interval=60)
-    await markets.get_series(client, "SOME")
+    m = await markets.get_market(client, "KXBTC-24JAN15")
+    ob = await markets.get_market_orderbook(client, "KXBTC-24JAN15", depth=10)
+    trades = await markets.get_trades(client, ticker="KXBTC-24JAN15", limit=50)
+    await markets.get_market_candlesticks(
+        client, "KXBTC-24JAN15", series_ticker="KXBTC", period_interval=60
+    )
+    await markets.get_series(client, "KXBTC")
     await markets.get_series_list(client, limit=20)
 
-    # Events
+    # Events (event_ticker, e.g. INXD-25, KXBTC)
     evs = await events.get_events(client, limit=20, status="open")
-    ev = await events.get_event(client, "SOME-EVENT")
+    ev = await events.get_event(client, "INXD-25")
+    await events.get_event_metadata(client, "INXD-25")
     await events.get_multivariate_events(client)
 
-    # Orders (auth)
+    # Orders (auth; ticker = market ticker. yes_price/no_price 1–99 cents.)
     ords = await orders.get_orders(client, status="resting", limit=50)
     o = await orders.get_order(client, "order-id")
-    await orders.create_order(client, ticker="KXBTC", side="yes", action="buy", count=1, yes_price=50)
+    await orders.create_order(
+        client, ticker="KXBTC-24JAN15", side="yes", action="buy", count=1, yes_price=50
+    )
     await orders.cancel_order(client, "order-id")
-    await orders.amend_order(client, "order-id", ticker="KXBTC", side="yes", action="buy", yes_price=55)
-    await orders.batch_create_orders(client, [{"ticker": "KXBTC", "side": "yes", "action": "buy", "count": 1, "yes_price": 50}])
-    await orders.batch_cancel_orders(client, order_ids=["id1", "id2"])  # or ids=
+    await orders.amend_order(
+        client, "order-id", ticker="KXBTC-24JAN15", side="yes", action="buy", yes_price=55
+    )
+    await orders.batch_create_orders(
+        client,
+        [{"ticker": "KXBTC-24JAN15", "side": "yes", "action": "buy", "count": 1, "yes_price": 50}],
+    )
+    await orders.batch_cancel_orders(client, ids=["id1", "id2"])
 
     # Portfolio (auth)
     bal = await portfolio.get_balance(client)
