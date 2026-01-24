@@ -1,4 +1,4 @@
-"""Pytest fixtures for benchmarks: config and ticker from env / live API."""
+"""Pytest fixtures for benchmarks: mock Kalshi server and config."""
 
 from __future__ import annotations
 
@@ -6,18 +6,29 @@ import asyncio
 
 import pytest
 
-from kyro import RestClient, config_from_env
+from kyro import KyroConfig, RestClient
 from kyro.rest.api import markets
 
-
-@pytest.fixture
-def bench_config():
-    """KyroConfig from KALSHI_* env (demo by default). Use for live API benchmarks."""
-    return config_from_env(default_demo=True)
+from benchmarks.mock_server import run_server_thread
 
 
 @pytest.fixture
-def bench_ticker(bench_config):
+def bench_mock_base_url():
+    """Base URL of a local mock Kalshi server run in a background thread."""
+    url, stop, thread = run_server_thread(port=0)
+    yield url
+    stop.set()
+    thread.join(timeout=2)
+
+
+@pytest.fixture
+def bench_config(bench_mock_base_url: str):
+    """KyroConfig pointing at the local mock server for REST client benchmarks."""
+    return KyroConfig(base_url=bench_mock_base_url)
+
+
+@pytest.fixture
+def bench_ticker(bench_config: KyroConfig):
     """A market ticker from get_markets(limit=1) for orderbook bench. None if none found."""
     async def _fetch():
         async with RestClient(bench_config) as client:

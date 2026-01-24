@@ -1,7 +1,8 @@
-"""Benchmarks for RestClient against the live Kalshi API.
+"""Benchmarks for RestClient against a local mock Kalshi API.
 
-Uses config_from_env() (KALSHI_ACCESS_KEY, KALSHI_PRIVATE_KEY or KALSHI_PRIVATE_KEY_PATH,
-KALSHI_DEMO=1, etc.). Public endpoints work without auth; balance/orders need creds.
+Runs vs a mock server (benchmarks.mock_server) so results reflect client overhead
+(parsing, serialization, client logic) instead of network/API variance. No auth
+or live Kalshi credentials needed.
 
 Run: pytest benchmarks/bench_rest_client.py -v --benchmark-only
 """
@@ -13,7 +14,6 @@ import asyncio
 import pytest
 
 from kyro import RestClient
-from kyro.exceptions import KyroHTTPError
 from kyro.rest.api import exchange, events, markets, orders, portfolio
 
 
@@ -79,14 +79,6 @@ def test_get_market_orderbook(benchmark: object, bench_config, bench_ticker: str
 
 
 def test_get_balance(benchmark: object, bench_config) -> None:
-    if not getattr(bench_config, "auth_signer", None):
-        pytest.skip("auth required: set KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY or KALSHI_PRIVATE_KEY_PATH")
-    try:
-        asyncio.run(_one_get_balance(bench_config))
-    except KyroHTTPError as e:
-        if e.status in (401, 403):
-            pytest.skip(f"Kalshi returned {e.status} (key may not be valid for this env)")
-
     def run() -> dict:
         return asyncio.run(_one_get_balance(bench_config))
 
@@ -94,14 +86,6 @@ def test_get_balance(benchmark: object, bench_config) -> None:
 
 
 def test_get_orders(benchmark: object, bench_config) -> None:
-    if not getattr(bench_config, "auth_signer", None):
-        pytest.skip("auth required: set KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY or KALSHI_PRIVATE_KEY_PATH")
-    try:
-        asyncio.run(_one_get_orders(bench_config))
-    except KyroHTTPError as e:
-        if e.status in (401, 403):
-            pytest.skip(f"Kalshi returned {e.status} (key may not be valid for this env)")
-
     def run() -> dict:
         return asyncio.run(_one_get_orders(bench_config))
 
