@@ -31,11 +31,12 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
     "ruff>=0.1.0",
 ]
 
 [project.urls]
-Repository = "https://github.com/your-org/kyro"
+Repository = "https://github.com/UTXOnly/kyro"
 
 [tool.setuptools.packages.find]
 where = ["src"]

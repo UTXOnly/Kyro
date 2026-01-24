@@ -109,6 +109,12 @@ class RestClient:
                 str(e) or "Request timed out",
                 timeout=getattr(e, "timeout", None) or self._config.request_timeout,
             ) from e
+        except TimeoutError as e:
+            # aiohttp can raise asyncio.TimeoutError (TimeoutError) on total timeout
+            raise KyroTimeoutError(
+                str(e) or "Request timed out",
+                timeout=self._config.request_timeout,
+            ) from e
         except (aiohttp.ClientError, ConnectionError, OSError) as e:
             raise KyroConnectionError(str(e)) from e
 

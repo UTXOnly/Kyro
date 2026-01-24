@@ -2,14 +2,16 @@
 
 **Async Kalshi API client** — aiohttp, orjson, Pydantic. Built for **apps** (library, not CLI).
 
-- **REST client** for Kalshi’s HTTP API (markets, orders, portfolio, etc.).
-- **WebSocket** support planned; shared config/session design for reuse.
+- **REST client** for Kalshi’s HTTP API.
+- **Modular API** — `exchange`, `markets`, `events`, `orders`, `portfolio` (typed helpers for [Kalshi’s API](https://docs.kalshi.com/api-reference/)).
 - **Error handling**: `KyroError`, `KyroHTTPError`, `KyroConnectionError`, `KyroTimeoutError`, `KyroValidationError`.
-- **Serialization**: orjson for JSON, Pydantic for request/response models.
+- **Serialization**: orjson + Pydantic.
+
+---
 
 ## Requirements
 
-- Python ≥ 3.10
+- Python ≥ 3.10  
 - aiohttp, pydantic, orjson
 
 ## Install
@@ -19,20 +21,14 @@ pip install -e .
 # or: pip install kyro  (when published)
 ```
 
-## Quick start
+On Homebrew Python (macOS) and other [PEP 668](https://peps.python.org/pep-0668/) setups, use a virtual environment first:
 
-```python
-import asyncio
-from kyro import RestClient, KyroConfig
-
-async def main():
-    cfg = KyroConfig()  # defaults: production Kalshi base URL
-    async with RestClient(cfg) as client:
-        data = await client.get("/markets")
-        print(data)
-
-asyncio.run(main())
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
 ```
+
+---
 
 ## Configuration
 
@@ -45,14 +41,14 @@ cfg = KyroConfig(base_url="https://trading-api.kalshi.com/v2")
 # Demo
 cfg = KyroConfig(base_url="https://demo-api.kalshi.co/trade-api/v2")
 
-# Timeouts, headers
+# Timeouts and headers
 cfg = KyroConfig(
     request_timeout=15.0,
     connect_timeout=5.0,
     default_headers={"User-Agent": "MyApp/1.0"},
 )
 
-# Auth (KALSHI-ACCESS-*). Signing (RSA) to be added later.
+# Auth (KALSHI-ACCESS-*). RSA signing to be added later.
 cfg = KyroConfig(auth_headers={
     "KALSHI-ACCESS-KEY": "your-key-id",
     "KALSHI-ACCESS-TIMESTAMP": "...",
@@ -60,30 +56,9 @@ cfg = KyroConfig(auth_headers={
 })
 ```
 
-## REST client
+---
 
-```python
-from kyro import RestClient, KyroConfig
-from pydantic import BaseModel
-
-class Market(BaseModel):
-    ticker: str
-    title: str | None = None
-
-async with RestClient(KyroConfig()) as client:
-    # Raw JSON (dict/list)
-    data = await client.get("/markets", params={"limit": 10})
-
-    # Validated Pydantic model
-    m = await client.get("/markets/KXBTC", response_model=Market)
-
-    # POST / PUT / PATCH with JSON body
-    await client.post("/portfolio/orders", json={"ticker": "KXBTC", "side": "yes", "action": "buy", "count": 1, "yes_price": 50})
-```
-
-## Modular API (Kalshi reference)
-
-Modular methods for [Kalshi’s API reference](https://docs.kalshi.com/api-reference/). Pass the `RestClient` as the first argument.
+## Modular API (exchange, markets, events, orders, portfolio)
 
 ```python
 from kyro import RestClient, KyroConfig
@@ -126,15 +101,50 @@ async with RestClient(KyroConfig()) as client:
     await portfolio.get_total_resting_order_value(client)
 ```
 
+---
+
+## API Reference
+
+Full request/response docs for **every method** (exchange, markets, events, orders, portfolio):  
+**[API_REFERENCE.md](API_REFERENCE.md)**
+
+---
+
+## Low-level REST client
+
+For paths not covered by the modular API, use the generic client:
+
+```python
+from kyro import RestClient, KyroConfig
+from pydantic import BaseModel
+
+async with RestClient(KyroConfig()) as client:
+    # GET with query params
+    data = await client.get("/exchange/status")
+
+    # GET with optional Pydantic validation
+    class Market(BaseModel):
+        ticker: str
+        title: str | None = None
+    m = await client.get("/markets/KXBTC-24JAN15", response_model=Market)
+
+    # POST / PUT / PATCH / DELETE
+    await client.post("/portfolio/orders", json={"ticker": "KXBTC", "side": "yes", "action": "buy", "count": 1, "yes_price": 50})
+    await client.delete("/portfolio/orders/order-id-here")
+```
+
+---
+
 ## Error handling
 
 ```python
 from kyro import RestClient, KyroConfig
+from kyro.rest import markets
 from kyro.exceptions import KyroHTTPError, KyroConnectionError, KyroTimeoutError
 
 async with RestClient(KyroConfig()) as client:
     try:
-        await client.get("/markets")
+        await markets.get_markets(client, limit=10)
     except KyroHTTPError as e:
         print(e.status, e.response_body, e.error_code)
     except KyroConnectionError:
@@ -143,21 +153,23 @@ async with RestClient(KyroConfig()) as client:
         print("Timeout", e.timeout)
 ```
 
+---
+
 ## Project layout
 
 ```
 kyro/
 ├── src/kyro/
-│   ├── __init__.py         # Public API
-│   ├── _config.py          # KyroConfig (base URL, timeouts, auth)
-│   ├── _session.py         # KyroSession (aiohttp, reuse for REST + WS)
-│   ├── _serialization.py   # orjson + Pydantic
+│   ├── __init__.py
+│   ├── _config.py
+│   ├── _session.py
+│   ├── _serialization.py
 │   ├── _version.py
-│   ├── exceptions.py       # Kyro* exceptions
+│   ├── exceptions.py
 │   └── rest/
-│       ├── __init__.py     # RestClient + api (exchange, markets, …)
-│       ├── client.py       # RestClient
-│       └── api/           # Modular Kalshi methods (docs.kalshi.com/api-reference)
+│       ├── __init__.py      # RestClient, exchange, markets, events, orders, portfolio
+│       ├── client.py
+│       └── api/
 │           ├── __init__.py
 │           ├── exchange.py
 │           ├── markets.py
@@ -166,17 +178,34 @@ kyro/
 │           └── portfolio.py
 ├── pyproject.toml
 ├── README.md
+├── API_REFERENCE.md   # Request/response docs for every modular method
 └── DESIGN_CHECKLIST.md
 ```
 
+---
+
 ## Development
 
+Create a venv, install with dev extras, then run tests (required on Homebrew Python; see [PEP 668](https://peps.python.org/pep-0668/)):
+
 ```bash
-python -m venv .venv && source .venv/bin/activate  # or Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-pytest tests/ -v
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"     # install only; does not run tests
+pytest tests/ -v            # run tests
 ruff check src/
 ```
+
+**Tests:** See [TESTING.md](TESTING.md). Quick runs (venv activated, `.[dev]` already installed):
+
+```bash
+pytest tests/ -v
+pytest tests/ -v --cov=kyro --cov-report=term-missing
+```
+
+If `pip install -e ".[dev]"` fails with **`externally-managed-environment`**, create and activate a venv first; do not use `--break-system-packages`.
+
+---
 
 ## License
 

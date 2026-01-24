@@ -14,7 +14,7 @@ Use this to stay on track and prioritize work. Kyro = **async Kalshi API client*
 - [x] **REST client**: `RestClient` async context manager. `get` / `post` / `put` / `patch` / `delete`. Optional `response_model`, `params`, `json` body. Kyro exceptions, Kalshi error parsing.
 - [x] **Docs**: Module/client docstrings, README, DESIGN_CHECKLIST.
 - [x] **Unit tests**: Pytest + pytest-asyncio. Serialization, config, exceptions, RestClient context-manager check.
-- [x] **Modular API**: `kyro.rest.api` with exchange, markets, events, orders, portfolio. Functions match [Kalshi API reference](https://docs.kalshi.com/api-reference/) (get_exchange_status, get_markets, get_market, get_market_orderbook, get_trades, get_market_candlesticks, get_series, get_series_list, get_live_data, get_events, get_event, get_event_metadata, get_multivariate_events, get_orders, get_order, create_order, cancel_order, amend_order, decrease_order, batch_create_orders, batch_cancel_orders, get_balance, get_positions, get_fills, get_settlements, get_total_resting_order_value, subaccounts, transfers). RestClient.delete supports optional json body.
+- [x] **Modular API**: `kyro.rest` exports exchange, markets, events, orders, portfolio. **API_REFERENCE.md**: request/response docs for every method (exchange, markets, events, orders, portfolio). README links to it.
 
 ---
 
