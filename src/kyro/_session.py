@@ -50,7 +50,7 @@ class KyroSession:
             connect=self._config.connect_timeout,
         )
         headers = {**self._config.default_headers}
-        if self._config.auth_headers:
+        if self._config.auth_headers and not self._config.auth_signer:
             headers.update(self._config.auth_headers)
         base = str(self._config.base_url).rstrip("/") + "/"
         self._session = aiohttp.ClientSession(

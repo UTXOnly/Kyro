@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, TypeVar
+from urllib.parse import urlparse
 
 import aiohttp
 from pydantic import BaseModel
@@ -95,6 +96,12 @@ class RestClient:
             except Exception as e:
                 raise KyroValidationError(f"Failed to serialize request body: {e}") from e
             extra_headers = {"Content-Type": "application/json"}
+
+        if self._config.auth_signer:
+            base_path = urlparse(str(self._config.base_url)).path.rstrip("/") or "/"
+            full_path = f"{base_path}/{url}" if url else base_path
+            ah = self._config.auth_signer(method, full_path, body)
+            extra_headers = {**(extra_headers or {}), **ah}
 
         try:
             async with session.request(

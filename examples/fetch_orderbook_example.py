@@ -9,8 +9,8 @@ Uses the Kalshi **demo** API by default. For production:
 
     KALSHI_PRODUCTION=1 python examples/fetch_orderbook_example.py
 
-Public endpoints (events, markets, orderbook) do not require auth. If you
-see 401, add API keys via KyroConfig(auth_headers={...}).
+Auth (optional): set KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY or KALSHI_PRIVATE_KEY_PATH.
+Requires: pip install "kyro[auth]". Public endpoints (events, markets, orderbook) do not need auth.
 
 If you get ModuleNotFoundError: No module named 'kyro', install from repo root:
     pip install -e .   # or  pip install -e ".[dev]"
@@ -19,10 +19,9 @@ If you get ModuleNotFoundError: No module named 'kyro', install from repo root:
 from __future__ import annotations
 
 import asyncio
-import os
 import sys
 
-from kyro import KyroConfig, RestClient
+from kyro import config_from_env, RestClient
 from kyro.exceptions import KyroHTTPError
 from kyro.rest import events, markets
 
@@ -61,9 +60,7 @@ def parse_orderbook(data: dict) -> dict:
 
 
 async def main() -> None:
-    use_production = os.environ.get("KALSHI_PRODUCTION", "").strip().lower() in ("1", "true", "yes")
-    base = None if use_production else "https://demo-api.kalshi.co/trade-api/v2"
-    cfg = KyroConfig(base_url=base) if base else KyroConfig()
+    cfg = config_from_env(default_demo=True)  # demo by default for safety
     print(f"Using: {cfg.base_url}")
 
     try:
@@ -113,7 +110,8 @@ async def main() -> None:
     except KyroHTTPError as e:
         if e.status == 401:
             print(
-                "\n401 (unauthorized). Add KyroConfig(auth_headers={...}) with KALSHI-ACCESS-KEY, etc.",
+                "\n401 (unauthorized). Set KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY (or KALSHI_PRIVATE_KEY_PATH), "
+                'pip install "kyro[auth]", and use config_from_env().',
                 file=sys.stderr,
             )
         raise

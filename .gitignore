@@ -48,3 +48,7 @@ Thumbs.db
 *.local
 .env.local
 .env.*.local
+
+.kalshi/
+kal_key.pem
+scratchpad

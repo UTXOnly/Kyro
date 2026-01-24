@@ -7,19 +7,19 @@ Run from repo root (venv activated, pip install -e . or .[dev]):
     python scripts/live_api_smoke.py              # production
     KALSHI_DEMO=1 python scripts/live_api_smoke.py   # demo
 
-Auth-required endpoints will 401 without KyroConfig(auth_headers={...}); they are reported
-as "skip (auth)". Mutating endpoints (create_order, cancel_order, etc.) are not called;
-they are reported as "skip (mutating)".
+Auth: set KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY or KALSHI_PRIVATE_KEY_PATH so
+auth-required endpoints run. Requires: pip install "kyro[auth]". Otherwise they report
+"skip (auth required)". Mutating endpoints (create_order, cancel_order, etc.) are
+not called; they report "skip (mutating)".
 """
 
 from __future__ import annotations
 
 import asyncio
-import os
 import sys
 from dataclasses import dataclass
 
-from kyro import KyroConfig, RestClient
+from kyro import config_from_env, RestClient
 from kyro.exceptions import KyroHTTPError, KyroConnectionError, KyroTimeoutError
 from kyro.rest import exchange, events, markets, orders, portfolio
 
@@ -68,9 +68,7 @@ def _series_ticker(ctx: dict) -> str:
 
 
 async def main() -> None:
-    use_demo = os.environ.get("KALSHI_DEMO", "").strip().lower() in ("1", "true", "yes")
-    base = "https://demo-api.kalshi.co/trade-api/v2" if use_demo else None
-    cfg = KyroConfig(base_url=base) if base else KyroConfig()
+    cfg = config_from_env()
     print(f"Live API smoke test — {cfg.base_url}\n")
 
     results: list[Result] = []
@@ -130,7 +128,7 @@ async def main() -> None:
                 await coro(client, ctx)
                 results.append(Result(module, method, "ok", ""))
             except KyroHTTPError as e:
-                if e.status == 401:
+                if e.status in (401, 403):
                     results.append(Result(module, method, "skip", "auth required"))
                 elif e.status == 404:
                     results.append(Result(module, method, "ok", "404 (endpoint reachable)"))

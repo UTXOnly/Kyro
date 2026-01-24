@@ -36,13 +36,17 @@ pip install -e .
 ## Configuration
 
 ```python
-from kyro import KyroConfig
+from kyro import KyroConfig, config_from_env
 
 # Production (default). Despite "elections" in the host, this serves all Kalshi markets.
 cfg = KyroConfig(base_url="https://api.elections.kalshi.com/trade-api/v2")
 
 # Demo
 cfg = KyroConfig(base_url="https://demo-api.kalshi.co/trade-api/v2")
+
+# From environment (base URL and optional auth). See env vars below.
+cfg = config_from_env()                    # production by default
+cfg = config_from_env(default_demo=True)   # demo when KALSHI_* not set
 
 # Timeouts and headers
 cfg = KyroConfig(
@@ -51,13 +55,27 @@ cfg = KyroConfig(
     default_headers={"User-Agent": "MyApp/1.0"},
 )
 
-# Auth (KALSHI-ACCESS-*). RSA signing to be added later.
+# Auth: use config_from_env() with KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY (or
+# KALSHI_PRIVATE_KEY_PATH) set. Requires: pip install "kyro[auth]". Or pass headers manually:
 cfg = KyroConfig(auth_headers={
     "KALSHI-ACCESS-KEY": "your-key-id",
     "KALSHI-ACCESS-TIMESTAMP": "...",
     "KALSHI-ACCESS-SIGNATURE": "...",
 })
 ```
+
+**Environment variables** (for `config_from_env()`):
+
+| Variable | Description |
+|----------|-------------|
+| `KALSHI_BASE_URL` | Override API base URL |
+| `KALSHI_DEMO=1` | Use demo base URL |
+| `KALSHI_PRODUCTION=1` | Use production base URL |
+| `KALSHI_ACCESS_KEY` or `KALSHI_ACCESS_KEY_ID` | API key ID for request signing |
+| `KALSHI_PRIVATE_KEY` | PEM string (use `\n` for newlines in env) |
+| `KALSHI_PRIVATE_KEY_PATH` | Path to `.key` or `.pem` file |
+
+Auth requires ``pip install "kyro[auth]"`` (adds `cryptography`).
 
 ---
 

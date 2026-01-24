@@ -54,10 +54,12 @@ python scripts/live_api_smoke.py              # production (default)
 KALSHI_DEMO=1 python scripts/live_api_smoke.py   # demo
 ```
 
+To run auth-required endpoints: set ``KALSHI_ACCESS_KEY`` and ``KALSHI_PRIVATE_KEY`` or ``KALSHI_PRIVATE_KEY_PATH``. Install the auth extra: ``pip install -e ".[auth]"`` or, if you use dev deps, ``pip install -e ".[dev,auth]"``. (Using ``pip install "kyro[auth]"`` can fail with “does not provide the extra 'auth'” if kyro was originally installed without that extra; see Troubleshooting.)
+
 - **ok** — request succeeded (200 or 404 for missing-by-id reads).
-- **skip (auth required)** — 401; endpoint needs `KyroConfig(auth_headers={...})`.
+- **skip (auth required)** — 401 or 403; endpoint needs `KyroConfig(auth_headers={...})`.
 - **skip (mutating)** — not called; would create/cancel/amend orders or change portfolio (create_order, cancel_order, amend_order, decrease_order, batch_*, create_subaccount, transfer_between_subaccounts).
-- **fail** — 4xx/5xx (other than 401/404), connection error, or timeout.
+- **fail** — 4xx/5xx (other than 401, 403, 404), connection error, or timeout.
 
 The script exits with code 1 if any **fail**. Public endpoints (exchange, events, markets reads) should **ok** on production without auth; orders and portfolio will **skip (auth)** without API keys.
 
@@ -75,6 +77,8 @@ The script exits with code 1 if any **fail**. Public endpoints (exchange, events
 - **`pytest: command not found`** — Use the project venv and `pip install -e ".[dev]"`; pytest is a dev dependency. Run `pytest tests/ -v` from **repo root** (the `tests/` directory is at the root, not inside `examples/`).
 
 - **`error: externally-managed-environment`** — Create and activate a venv first; do not use `--break-system-packages`.
+
+- **`kyro 0.1.0 does not provide the extra 'auth'`** or **`ModuleNotFoundError: No module named 'cryptography'`** — The installed kyro was built before the `auth` extra existed, so its metadata and deps are stale. Reinstall with the auth extra: `pip uninstall kyro -y && pip install -e ".[dev,auth]"` (or `.[auth]` if you don’t need dev). Quick workaround: `pip install cryptography`.
 
 ## What's tested
 
