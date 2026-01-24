@@ -8,7 +8,6 @@ WebSocket client. Use as an async context manager.
 from __future__ import annotations
 
 import logging
-from typing import AsyncIterator
 
 import aiohttp
 

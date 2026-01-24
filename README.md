@@ -4,6 +4,9 @@
 
 # Kyro
 
+[![Ruff](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml)
+[![Black](https://github.com/UTXOnly/kyro/actions/workflows/black.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/black.yml)
+
 Kyro is an async Python client for the Kalshi REST API, built with an emphasis on
 typing, validation, and predictable behavior in async code.
 
@@ -303,8 +306,9 @@ Create a venv, install with dev extras, then run tests (required on Homebrew Pyt
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"     # install only; does not run tests
+ruff check .                # lint
+black --check .             # format check (black . to fix)
 pytest tests/ -v            # run tests
-ruff check src/
 ```
 
 **Tests:** See [TESTING.md](TESTING.md). Quick runs (venv activated, `.[dev]` already installed):

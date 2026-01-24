@@ -81,7 +81,9 @@ class KyroTimeoutError(KyroError):
         timeout: The timeout value that was exceeded (seconds), if known.
     """
 
-    def __init__(self, message: str, *args: object, timeout: float | None = None, **kwargs: Any) -> None:
+    def __init__(
+        self, message: str, *args: object, timeout: float | None = None, **kwargs: Any
+    ) -> None:
         super().__init__(message, *args, **kwargs)
         self.timeout = timeout
 

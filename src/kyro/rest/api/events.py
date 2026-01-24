@@ -31,15 +31,17 @@ async def get_events(
     Query: limit (1–200), cursor, with_nested_markets, with_milestones,
     status (open|closed|settled), series_ticker, min_close_ts (Unix).
     """
-    params = _clean({
-        "limit": limit,
-        "cursor": cursor,
-        "with_nested_markets": with_nested_markets,
-        "with_milestones": with_milestones,
-        "status": status,
-        "series_ticker": series_ticker,
-        "min_close_ts": min_close_ts,
-    })
+    params = _clean(
+        {
+            "limit": limit,
+            "cursor": cursor,
+            "with_nested_markets": with_nested_markets,
+            "with_milestones": with_milestones,
+            "status": status,
+            "series_ticker": series_ticker,
+            "min_close_ts": min_close_ts,
+        }
+    )
     return await client.get("/events", params=params or None)
 
 

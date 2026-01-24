@@ -38,9 +38,7 @@ async def _error_404(_: web.Request) -> web.Response:
 
 
 async def _error_500(_: web.Request) -> web.Response:
-    return web.json_response(
-        {"error_code": "InternalError", "message": "server error"}, status=500
-    )
+    return web.json_response({"error_code": "InternalError", "message": "server error"}, status=500)
 
 
 async def _slow(_: web.Request) -> web.Response:

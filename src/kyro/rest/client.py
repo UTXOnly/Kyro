@@ -131,7 +131,9 @@ class RestClient:
 
         if status >= 400:
             parsed, err_code = self._parse_error_body(raw)
-            raise KyroHTTPError("Kalshi API error", status=status, response_body=parsed, error_code=err_code)
+            raise KyroHTTPError(
+                "Kalshi API error", status=status, response_body=parsed, error_code=err_code
+            )
 
         if not raw:
             return None

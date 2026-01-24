@@ -8,6 +8,6 @@ Example:
     ...     ms = await markets.get_markets(client, limit=10)
 """
 
-from . import exchange, events, markets, orders, portfolio
+from . import events, exchange, markets, orders, portfolio
 
 __all__ = ["exchange", "events", "markets", "orders", "portfolio"]

@@ -19,9 +19,9 @@ import asyncio
 import sys
 from dataclasses import dataclass
 
-from kyro import config_from_env, RestClient
-from kyro.exceptions import KyroHTTPError, KyroConnectionError, KyroTimeoutError
-from kyro.rest import exchange, events, markets, orders, portfolio
+from kyro import RestClient, config_from_env
+from kyro.exceptions import KyroConnectionError, KyroHTTPError, KyroTimeoutError
+from kyro.rest import events, exchange, markets, orders, portfolio
 
 
 @dataclass
@@ -79,25 +79,65 @@ async def main() -> None:
     cases: list[tuple[str, str, object, str | None]] = [
         # exchange
         ("exchange", "get_exchange_status", lambda c, x: exchange.get_exchange_status(c), None),
-        ("exchange", "get_exchange_announcements", lambda c, x: exchange.get_exchange_announcements(c), None),
+        (
+            "exchange",
+            "get_exchange_announcements",
+            lambda c, x: exchange.get_exchange_announcements(c),
+            None,
+        ),
         ("exchange", "get_exchange_schedule", lambda c, x: exchange.get_exchange_schedule(c), None),
-        ("exchange", "get_series_fee_changes", lambda c, x: exchange.get_series_fee_changes(c), None),
-        ("exchange", "get_user_data_timestamp", lambda c, x: exchange.get_user_data_timestamp(c), None),
+        (
+            "exchange",
+            "get_series_fee_changes",
+            lambda c, x: exchange.get_series_fee_changes(c),
+            None,
+        ),
+        (
+            "exchange",
+            "get_user_data_timestamp",
+            lambda c, x: exchange.get_user_data_timestamp(c),
+            None,
+        ),
         # events
         ("events", "get_events", _get_events, None),
         ("events", "get_event", lambda c, x: events.get_event(c, _event_ticker(x)), None),
-        ("events", "get_event_metadata", lambda c, x: events.get_event_metadata(c, _event_ticker(x)), None),
-        ("events", "get_multivariate_events", lambda c, x: events.get_multivariate_events(c, limit=5), None),
+        (
+            "events",
+            "get_event_metadata",
+            lambda c, x: events.get_event_metadata(c, _event_ticker(x)),
+            None,
+        ),
+        (
+            "events",
+            "get_multivariate_events",
+            lambda c, x: events.get_multivariate_events(c, limit=5),
+            None,
+        ),
         # markets
         ("markets", "get_markets", _get_markets, None),
         ("markets", "get_market", lambda c, x: markets.get_market(c, _ticker(x)), None),
-        ("markets", "get_market_orderbook", lambda c, x: markets.get_market_orderbook(c, _ticker(x)), None),
+        (
+            "markets",
+            "get_market_orderbook",
+            lambda c, x: markets.get_market_orderbook(c, _ticker(x)),
+            None,
+        ),
         ("markets", "get_trades", lambda c, x: markets.get_trades(c, limit=5), None),
-        ("markets", "get_market_candlesticks", lambda c, x: markets.get_market_candlesticks(c, _ticker(x), limit=5), None),
+        (
+            "markets",
+            "get_market_candlesticks",
+            lambda c, x: markets.get_market_candlesticks(c, _ticker(x), limit=5),
+            None,
+        ),
         ("markets", "get_series_list", _get_series_list, None),
         ("markets", "get_series", lambda c, x: markets.get_series(c, _series_ticker(x)), None),
         ("markets", "get_live_data", lambda c, x: markets.get_live_data(c, _ticker(x)), None),
-        ("markets", "get_multiple_live_data", lambda c, x: markets.get_multiple_live_data(c, _ticker(x)), None),
+        (
+            "markets",
+            "get_multiple_live_data",
+            lambda c, x: markets.get_multiple_live_data(c, _ticker(x)),
+            None,
+        ),
         # orders
         ("orders", "get_orders", lambda c, x: orders.get_orders(c, limit=5), None),
         ("orders", "get_order", lambda c, x: orders.get_order(c, "live-smoke-fake-order-id"), None),
@@ -112,9 +152,24 @@ async def main() -> None:
         ("portfolio", "get_positions", lambda c, x: portfolio.get_positions(c, limit=5), None),
         ("portfolio", "get_fills", lambda c, x: portfolio.get_fills(c, limit=5), None),
         ("portfolio", "get_settlements", lambda c, x: portfolio.get_settlements(c, limit=5), None),
-        ("portfolio", "get_total_resting_order_value", lambda c, x: portfolio.get_total_resting_order_value(c), None),
-        ("portfolio", "get_all_subaccount_balances", lambda c, x: portfolio.get_all_subaccount_balances(c), None),
-        ("portfolio", "get_subaccount_transfers", lambda c, x: portfolio.get_subaccount_transfers(c, limit=5), None),
+        (
+            "portfolio",
+            "get_total_resting_order_value",
+            lambda c, x: portfolio.get_total_resting_order_value(c),
+            None,
+        ),
+        (
+            "portfolio",
+            "get_all_subaccount_balances",
+            lambda c, x: portfolio.get_all_subaccount_balances(c),
+            None,
+        ),
+        (
+            "portfolio",
+            "get_subaccount_transfers",
+            lambda c, x: portfolio.get_subaccount_transfers(c, limit=5),
+            None,
+        ),
         ("portfolio", "create_subaccount", None, "mutating"),
         ("portfolio", "transfer_between_subaccounts", None, "mutating"),
     ]
@@ -133,7 +188,9 @@ async def main() -> None:
                 elif e.status == 404:
                     results.append(Result(module, method, "ok", "404 (endpoint reachable)"))
                 else:
-                    results.append(Result(module, method, "fail", f"{e.status} {e.error_code or ''}"))
+                    results.append(
+                        Result(module, method, "fail", f"{e.status} {e.error_code or ''}")
+                    )
             except (KyroConnectionError, KyroTimeoutError) as e:
                 results.append(Result(module, method, "fail", str(e)))
             except Exception as e:
