@@ -30,6 +30,8 @@ htmlcov/
 .nox/
 .benchmarks/
 benchmark_results.txt
+benchmark_serialization.txt
+benchmark_rest_client.txt
 
 # mypy, ruff
 .mypy_cache/

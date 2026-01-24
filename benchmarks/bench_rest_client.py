@@ -4,7 +4,9 @@ Runs vs a mock server (benchmarks.mock_server) so results reflect client overhea
 (parsing, serialization, client logic) instead of network/API variance. No auth
 or live Kalshi credentials needed.
 
-Run: pytest benchmarks/bench_rest_client.py -v --benchmark-only
+Run separately from serialization benchmarks (different scale: ms vs µs):
+
+  pytest benchmarks/bench_rest_client.py -v --benchmark-only
 """
 
 from __future__ import annotations
