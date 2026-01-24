@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/UTXOnly/kyro/testing/assets/logo.png" alt="Kyro" width="420">
+  <img src="https://raw.githubusercontent.com/UTXOnly/kyro/testing/assets/cleaned_logo.svg" alt="Kyro" width="420">
 </p>
 
 # Kyro
@@ -223,6 +223,8 @@ ruff check src/
 pytest tests/ -v
 pytest tests/ -v --cov=kyro --cov-report=term-missing
 ```
+
+**Live API smoke** (every endpoint against the real Kalshi API): `python scripts/live_api_smoke.py` — see [TESTING.md](TESTING.md#live-api-smoke-test).
 
 If `pip install -e ".[dev]"` fails with **`externally-managed-environment`**, create and activate a venv first; do not use `--break-system-packages`.
 
