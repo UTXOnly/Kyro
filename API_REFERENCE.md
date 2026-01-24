@@ -66,14 +66,18 @@ data = await exchange.get_exchange_schedule(client)
 
 ### `get_series_fee_changes`
 
-**HTTP:** `GET /exchange/series-fee-changes`
+**HTTP:** `GET /series/fee_changes`  
+**Auth:** No
 
 **Usage:**
 ```python
 data = await exchange.get_series_fee_changes(client)
+# optional: series_ticker=, show_historical=
 ```
 
-**Response (200):** fee change records per Kalshi
+**Query:** `series_ticker`, `show_historical` (default false).
+
+**Response (200):** `{ "series_fee_change_arr": [...] }` per Kalshi
 
 ---
 
@@ -305,7 +309,7 @@ data = await markets.get_trades(
 
 ### `get_market_candlesticks`
 
-**HTTP:** `GET /markets/{ticker}/candlesticks`  
+**HTTP:** `GET /series/{series_ticker}/markets/{ticker}/candlesticks`  
 **Auth:** No
 
 **Usage:**
@@ -313,21 +317,17 @@ data = await markets.get_trades(
 data = await markets.get_market_candlesticks(
     client,
     "KXBTC-24JAN15",
+    series_ticker="KXBTC",
     start_ts=1704067200,
     end_ts=1704153600,
-    period_interval=3600,
+    period_interval=60,
     limit=24,
 )
 ```
 
-**Query parameters**
+**Required:** `series_ticker`. If `start_ts`/`end_ts` omitted, uses last 24h.
 
-| Parameter          | Type | Description               |
-|--------------------|------|---------------------------|
-| `start_ts`         | int  | Start (Unix)              |
-| `end_ts`           | int  | End (Unix)                |
-| `period_interval`  | int  | Candle interval (seconds) |
-| `limit`            | int  | Max candles               |
+**Query:** `start_ts`, `end_ts` (Unix), `period_interval` (1|60|1440 minutes), `limit`, `include_latest_before_start`
 
 **Response (200):**
 ```json
@@ -756,6 +756,9 @@ data = await orders.cancel_order(client, "ord-abc123")
 data = await orders.amend_order(
     client,
     "ord-abc123",
+    ticker="KXBTC-24JAN15",
+    side="yes",
+    action="buy",
     yes_price=55,
     no_price=None,
     count=None,
@@ -764,19 +767,24 @@ data = await orders.amend_order(
 )
 ```
 
-**Body parameters**
+**Body parameters (Kalshi requires ticker, side, action plus any of the optional):**
 
-| Parameter            | Type | Description           |
-|----------------------|------|-----------------------|
-| `yes_price`          | int  | New yes price (1–99)  |
-| `no_price`           | int  | New no price (1–99)   |
-| `yes_price_dollars`  | str  | Yes price (dollars)   |
-| `no_price_dollars`   | str  | No price (dollars)    |
-| `count`              | int  | New size              |
-| `count_fp`           | str  | New size (fp)         |
-| `expiration_ts`      | int  | New expiry (Unix)     |
+| Parameter               | Type | Description                          |
+|-------------------------|------|--------------------------------------|
+| `ticker`                | str  | **Required.** Market ticker.         |
+| `side`                  | str  | **Required.** `yes` or `no`.         |
+| `action`                | str  | **Required.** `buy` or `sell`.       |
+| `yes_price`             | int  | New yes price (1–99)                 |
+| `no_price`              | int  | New no price (1–99)                  |
+| `yes_price_dollars`     | str  | Yes price (dollars)                  |
+| `no_price_dollars`      | str  | No price (dollars)                   |
+| `count`                 | int  | New size                             |
+| `count_fp`              | str  | New size (fp)                        |
+| `client_order_id`       | str  | Original client order ID to amend    |
+| `updated_client_order_id` | str | New client order ID after amendment  |
+| `expiration_ts`         | int  | New expiry (Unix)                    |
 
-**Response (200):** `{ "order": { ... } }`
+**Response (200):** `{ "old_order": { ... }, "order": { ... } }`
 
 ---
 
@@ -787,15 +795,20 @@ data = await orders.amend_order(
 
 **Usage:**
 ```python
-data = await orders.decrease_order(client, "ord-abc123", count=5)
+# Reduce by 5 contracts:
+data = await orders.decrease_order(client, "ord-abc123", reduce_by=5)
+# Or reduce to 1 contract:
+data = await orders.decrease_order(client, "ord-abc123", reduce_to=1)
 ```
 
-**Body parameters**
+**Body parameters (exactly one of reduce_by/reduce_by_fp or reduce_to/reduce_to_fp):**
 
-| Parameter  | Type | Description        |
-|------------|------|--------------------|
-| `count`    | int  | Contracts to reduce|
-| `count_fp` | str  | Contracts (fp)     |
+| Parameter     | Type | Description                               |
+|---------------|------|-------------------------------------------|
+| `reduce_by`   | int  | Contracts to reduce by (≥1)               |
+| `reduce_by_fp`| str  | Contracts to reduce by (fp)               |
+| `reduce_to`   | int  | Contracts to reduce to (≥0)               |
+| `reduce_to_fp`| str  | Contracts to reduce to (fp)               |
 
 **Response (200):** `{ "order": { ... } }`
 
@@ -803,7 +816,7 @@ data = await orders.decrease_order(client, "ord-abc123", count=5)
 
 ### `batch_create_orders`
 
-**HTTP:** `POST /portfolio/orders/batch`  
+**HTTP:** `POST /portfolio/orders/batched`  
 **Auth:** Yes
 
 **Usage:**
@@ -822,24 +835,16 @@ data = await orders.batch_create_orders(client, [
 
 ### `batch_cancel_orders`
 
-**HTTP:** `DELETE /portfolio/orders/batch`  
+**HTTP:** `DELETE /portfolio/orders/batched`  
 **Auth:** Yes
 
 **Usage:**
 ```python
 data = await orders.batch_cancel_orders(client, order_ids=["ord-1", "ord-2"])
-# or by market:
-data = await orders.batch_cancel_orders(client, ticker="KXBTC-24JAN15")
+# or: ids=["ord-1", "ord-2"]
 ```
 
-**Body parameters**
-
-| Parameter   | Type       | Description              |
-|-------------|------------|--------------------------|
-| `order_ids` | list[str]  | Order IDs to cancel      |
-| `ticker`    | str        | Cancel all in this market|
-
-Provide `order_ids` or `ticker`.
+**Body:** `{ "ids": ["order_id", ...] }`
 
 **Response (200):** per Kalshi (e.g. `{ "orders": [...] }`)
 
@@ -986,15 +991,15 @@ data = await portfolio.get_settlements(
 
 ### `get_total_resting_order_value`
 
-**HTTP:** `GET /portfolio/resting-order-value`  
-**Auth:** Yes
+**HTTP:** `GET /portfolio/summary/total_resting_order_value`  
+**Auth:** Yes. FCM-oriented; may 404 for regular accounts.
 
 **Usage:**
 ```python
 data = await portfolio.get_total_resting_order_value(client)
 ```
 
-**Response (200):** `{ "resting_order_value": 1234 }` or similar (cents)
+**Response (200):** `{ "total_resting_order_value": 1234 }` (cents)
 
 ---
 

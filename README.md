@@ -1,21 +1,16 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/UTXOnly/kyro@testing/assets/cleaned_logo.svg" alt="Kyro" width="420">
+  <img src="https://cdn.jsdelivr.net/gh/UTXOnly/kyro@more_testing/assets/logo.png" alt="Kyro" width="420">
 </p>
 
 # Kyro
 
 [![Ruff](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml) [![Black](https://github.com/UTXOnly/kyro/actions/workflows/black.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/black.yml) [![Tests](https://github.com/UTXOnly/kyro/actions/workflows/test.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/test.yml) [![Benchmarks](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml)
 
-Kyro is an async Python client for the Kalshi REST API, built with an emphasis on
-typing, validation, and predictable behavior in async code.
+Kyro is an async Python client library for the Kalshi REST API.
 
-The client uses aiohttp for non-blocking HTTP calls and Pydantic models to
-validate inputs and responses, so API interactions fail early and explicitly
-when something is wrong.
-
-Kyro is structured to mirror Kalshi’s API directly, with minimal abstraction.
-It’s intended to be a typed, programmatic interface — not a framework or a
-trading engine.
+It uses aiohttp for async HTTP requests and Pydantic for request and response
+validation. The library mirrors the API surface closely and exposes a typed,
+low-level interface.
 
 API areas are grouped into:
 - `exchange`
@@ -73,7 +68,7 @@ cfg = KyroConfig(
 )
 
 # Auth: use config_from_env() with KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY (or
-# KALSHI_PRIVATE_KEY_PATH) set. Requires: pip install "kyro[auth]". Or pass headers manually:
+# KALSHI_PRIVATE_KEY_PATH) in .env or exported. Requires: pip install "kyro[auth]". Or pass headers manually:
 cfg = KyroConfig(auth_headers={
     "KALSHI-ACCESS-KEY": "your-key-id",
     "KALSHI-ACCESS-TIMESTAMP": "...",
@@ -81,7 +76,7 @@ cfg = KyroConfig(auth_headers={
 })
 ```
 
-**Environment variables** (for `config_from_env()`):
+**Environment variables** (for `config_from_env()`): put these in a `.env` in the current directory (copy from `.env.example`) or export them. With ``pip install "kyro[auth]"``, `.env` is loaded automatically.
 
 | Variable | Description |
 |----------|-------------|
@@ -92,7 +87,7 @@ cfg = KyroConfig(auth_headers={
 | `KALSHI_PRIVATE_KEY` | PEM string (use `\n` for newlines in env) |
 | `KALSHI_PRIVATE_KEY_PATH` | Path to `.key` or `.pem` file |
 
-Auth requires ``pip install "kyro[auth]"`` (adds `cryptography`).
+Auth and `.env` loading: ``pip install "kyro[auth]"`` (adds `cryptography`, `python-dotenv`).
 
 ---
 
@@ -113,7 +108,7 @@ async with RestClient(KyroConfig()) as client:
     m = await markets.get_market(client, "KXBTC")
     ob = await markets.get_market_orderbook(client, "KXBTC", depth=10)
     trades = await markets.get_trades(client, ticker="KXBTC", limit=50)
-    await markets.get_market_candlesticks(client, "KXBTC", period_interval=60)
+    await markets.get_market_candlesticks(client, "KXBTC-24JAN15", series_ticker="KXBTC", period_interval=60)
     await markets.get_series(client, "SOME")
     await markets.get_series_list(client, limit=20)
 
@@ -127,9 +122,9 @@ async with RestClient(KyroConfig()) as client:
     o = await orders.get_order(client, "order-id")
     await orders.create_order(client, ticker="KXBTC", side="yes", action="buy", count=1, yes_price=50)
     await orders.cancel_order(client, "order-id")
-    await orders.amend_order(client, "order-id", yes_price=55)
+    await orders.amend_order(client, "order-id", ticker="KXBTC", side="yes", action="buy", yes_price=55)
     await orders.batch_create_orders(client, [{"ticker": "KXBTC", "side": "yes", "action": "buy", "count": 1, "yes_price": 50}])
-    await orders.batch_cancel_orders(client, order_ids=["id1", "id2"])
+    await orders.batch_cancel_orders(client, order_ids=["id1", "id2"])  # or ids=
 
     # Portfolio (auth)
     bal = await portfolio.get_balance(client)
@@ -158,7 +153,7 @@ From **repo root** with kyro installed (venv activated, `pip install -e .` or `.
 
   ```bash
   python examples/fetch_orderbook_example.py
-  KALSHI_PRODUCTION=1 python examples/fetch_orderbook_example.py   # production
+  # production: KALSHI_PRODUCTION=1 in .env, or: KALSHI_PRODUCTION=1 python examples/fetch_orderbook_example.py
   ```
 
 ---

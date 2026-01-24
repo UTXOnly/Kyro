@@ -35,12 +35,22 @@ async def get_exchange_schedule(client: RestClient) -> Any:
     return await client.get("/exchange/schedule")
 
 
-async def get_series_fee_changes(client: RestClient) -> Any:
-    """Get series fee changes.
+async def get_series_fee_changes(
+    client: RestClient,
+    *,
+    series_ticker: str | None = None,
+    show_historical: bool | None = None,
+) -> Any:
+    """Get series fee changes. `GET /series/fee_changes`.
 
-    `GET /exchange/series-fee-changes`
+    Query: series_ticker, show_historical (default false).
     """
-    return await client.get("/exchange/series-fee-changes")
+    params = {
+        k: v
+        for k, v in (("series_ticker", series_ticker), ("show_historical", show_historical))
+        if v is not None
+    }
+    return await client.get("/series/fee_changes", params=params or None)
 
 
 async def get_user_data_timestamp(client: RestClient) -> Any:

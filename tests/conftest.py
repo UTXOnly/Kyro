@@ -91,7 +91,13 @@ async def _portfolio_order_create(_: web.Request) -> web.Response:
 
 
 async def _portfolio_order_delete(r: web.Request) -> web.Response:
-    return _mk_json({"order": {"order_id": r.match_info["order_id"]}, "reduced_by": 1})
+    return _mk_json(
+        {
+            "order": {"order_id": r.match_info["order_id"]},
+            "reduced_by": 1,
+            "reduced_by_fp": "1.00",
+        }
+    )
 
 
 def create_kalshi_app() -> web.Application:

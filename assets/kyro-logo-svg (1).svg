@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300&amp;display=swap');
+    </style>
+  </defs>
+  
+  <g transform="translate(400, 100)">
+    <!-- B3 Logo Symbol -->
+    <g transform="translate(-180, 0)">
+      <!-- Left part of B -->
+      <path d="M -25 -35 Q -35 -35 -35 -25 L -35 25 Q -35 35 -25 35" 
+            stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+      
+      <!-- Top bump of B -->
+      <path d="M -25 -35 Q -10 -35 -10 -20 Q -10 -5 -25 -5" 
+            stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+      
+      <!-- Bottom bump of B forming 3 -->
+      <path d="M -25 -5 Q -10 -5 -10 10 Q -10 25 -25 25" 
+            stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+      
+      <!-- Right side forming 3 -->
+      <path d="M -25 25 Q 0 25 5 15 Q 10 5 10 -5 Q 10 -15 5 -25 Q 0 -35 -15 -35" 
+            stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+    </g>
+    
+    <!-- KYRO Text -->
+    <text x="0" y="15" 
+          font-family="'Jost', 'Arial', sans-serif" 
+          font-size="75" 
+          font-weight="300" 
+          fill="white" 
+          text-anchor="middle"
+          letter-spacing="8">KYRO</text>
+  </g>
+</svg>

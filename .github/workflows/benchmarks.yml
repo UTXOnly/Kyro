@@ -22,5 +22,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,bench]"
 
-      - name: Run benchmarks
-        run: pytest benchmarks/ -v --benchmark-only
+      - name: Run serialization benchmarks
+        run: pytest benchmarks/bench_serialization.py -v --benchmark-only 2>&1 | tee benchmark_serialization.txt
+
+      - name: Run REST client benchmarks
+        run: pytest benchmarks/bench_rest_client.py -v --benchmark-only 2>&1 | tee benchmark_rest_client.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            benchmark_serialization.txt
+            benchmark_rest_client.txt

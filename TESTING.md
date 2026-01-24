@@ -52,27 +52,27 @@ pip install -e ".[dev,bench]"
 pytest benchmarks/ -v --benchmark-only
 ```
 
-Set `KALSHI_DEMO=1` (or `KALSHI_PRODUCTION=1`). For `get_balance` and `get_orders` benchmarks, also set `KALSHI_ACCESS_KEY` and `KALSHI_PRIVATE_KEY` or `KALSHI_PRIVATE_KEY_PATH`, and `pip install -e ".[dev,bench,auth]"`. See **[benchmarks/README.md](benchmarks/README.md)**.
+Put `KALSHI_DEMO=1` (or `KALSHI_PRODUCTION=1`) and, for `get_balance`/`get_orders`, auth vars in `.env` or export them. Install: `pip install -e ".[dev,bench,auth]"`. See **[benchmarks/README.md](benchmarks/README.md)**. `config_from_env` loads `.env` when `kyro[auth]` is installed.
 
 ## Live API smoke test
 
-A step above unit tests: **`scripts/live_api_smoke.py`** calls every kyro endpoint and method against the real Kalshi API. Use it to verify the client and API paths with live data.
+**`scripts/live_api_smoke.py`** calls every kyro endpoint against the real Kalshi API: it discovers an open market, runs all reads and mutating calls, and writes every request/response to an audit log for review.
 
 From **repo root** (venv activated, network required):
 
 ```bash
-python scripts/live_api_smoke.py              # production (default)
-KALSHI_DEMO=1 python scripts/live_api_smoke.py   # demo
+cp .env.example .env   # edit .env with your production keys
+python scripts/live_api_smoke.py     # always uses production (ignores KALSHI_DEMO)
 ```
 
-To run auth-required endpoints: set ``KALSHI_ACCESS_KEY`` and ``KALSHI_PRIVATE_KEY`` or ``KALSHI_PRIVATE_KEY_PATH``. Install the auth extra: ``pip install -e ".[auth]"`` or, if you use dev deps, ``pip install -e ".[dev,auth]"``. (Using ``pip install "kyro[auth]"`` can fail with “does not provide the extra 'auth'” if kyro was originally installed without that extra; see Troubleshooting.)
+**Auth is required.** Put `KALSHI_ACCESS_KEY` and `KALSHI_PRIVATE_KEY` or `KALSHI_PRIVATE_KEY_PATH` in `.env` at project root (copy from `.env.example`). The script loads `.env` from the project root. `KALSHI_PRIVATE_KEY_PATH` may be relative (e.g. `kal_key.pem` or `.kalshi/kal_key.pem`). Install: `pip install -e ".[dev,auth]"`.
 
-- **ok** — request succeeded (200 or 404 for missing-by-id reads).
-- **skip (auth required)** — 401 or 403; endpoint needs `KyroConfig(auth_headers={...})`.
-- **skip (mutating)** — not called; would create/cancel/amend orders or change portfolio (create_order, cancel_order, amend_order, decrease_order, batch_*, create_subaccount, transfer_between_subaccounts).
-- **fail** — 4xx/5xx (other than 401, 403, 404), connection error, or timeout.
+- **Pass = 2xx only.** Any 4xx/5xx or exception is **fail**. We are not testing error handling.
+- **Audit log** — `live_smoke_audit.log` (or `KALSHI_SMOKE_AUDIT_LOG`). `.gitignore`d.
+- **Discovery** — Searches up to 100 open markets for one where `get_market` and `get_market_candlesticks` both return 200; if none, uses first where `get_market` returns 200.
+- **Mutating** — 1-share limit @ 1¢, 1¢ `transfer_between_subaccounts`, etc. All mutating endpoints are run.
 
-The script exits with code 1 if any **fail**. Public endpoints (exchange, events, markets reads) should **ok** on production without auth; orders and portfolio will **skip (auth)** without API keys.
+The script exits with code 1 if any **fail**.
 
 ## Options
 
@@ -99,6 +99,6 @@ The script exits with code 1 if any **fail**. Public endpoints (exchange, events
 - **`test_rest_client.py`** — `RestClient`: context-manager requirement, GET 200/204, 4xx/5xx → `KyroHTTPError`, path normalization, GET params, POST/PUT/PATCH/DELETE with JSON, `response_model`, invalid JSON body → `KyroValidationError`, timeout → `KyroTimeoutError`.
 - **`test_api_modules.py`** — `exchange`, `markets`, `events`, `orders`, `portfolio`: one or more functions per module against an in-process Kalshi-style fake server.
 
-- **`scripts/live_api_smoke.py`** — live smoke: every endpoint/method against the real Kalshi API (production or demo). See **Live API smoke test** above.
+- **`scripts/live_api_smoke.py`** — live smoke: every endpoint/method against the real Kalshi **production** API. See **Live API smoke test** above.
 
 Unit/integration tests use an in-process aiohttp app (`create_kalshi_app` in `conftest.py`); no real Kalshi or network. The live smoke script requires network access.

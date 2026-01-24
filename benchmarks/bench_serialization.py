@@ -1,4 +1,9 @@
-"""Benchmarks for kyro serialization: dumps, loads, loads_model."""
+"""Benchmarks for kyro serialization: dumps, loads, loads_model.
+
+Run separately from REST benchmarks (different scale: µs vs ms):
+
+  pytest benchmarks/bench_serialization.py -v --benchmark-only
+"""
 
 from __future__ import annotations
 
