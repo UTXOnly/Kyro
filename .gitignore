@@ -60,3 +60,6 @@ scratchpad
 
 # Live smoke audit (responses for manual review)
 live_smoke_audit.log
+
+# Release helper (local only)
+release_bump.py

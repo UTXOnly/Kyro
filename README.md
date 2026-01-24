@@ -31,9 +31,16 @@ Errors are surfaced as explicit exception types: `KyroError` (base), `KyroHTTPEr
 
 ## Install
 
+From PyPI (after a release):
+
+```bash
+pip install kyro
+```
+
+From the repo (development / unreleased):
+
 ```bash
 pip install -e .
-# or: pip install kyro  (when published)
 ```
 
 Authentication (request signing, `.env` loading) is included in the core package. See [Authentication](#authentication).
@@ -42,7 +49,7 @@ On Homebrew Python (macOS) and other [PEP 668](https://peps.python.org/pep-0668/
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e .
+pip install kyro   # or: pip install -e .  for development
 ```
 
 ---
