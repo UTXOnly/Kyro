@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/UTXOnly/kyro/main/assets/logo.png" alt="Kyro" width="280">
+  <img src="https://raw.githubusercontent.com/UTXOnly/kyro/testing/assets/logo.png" alt="Kyro" width="280">
 </p>
 
 # Kyro
