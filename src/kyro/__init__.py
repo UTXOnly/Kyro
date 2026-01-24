@@ -7,9 +7,9 @@ from kyro._auth import config_from_env
 from kyro._config import KyroConfig
 from kyro._version import __version__
 from kyro.exceptions import (
+    KyroConnectionError,
     KyroError,
     KyroHTTPError,
-    KyroConnectionError,
     KyroTimeoutError,
     KyroValidationError,
 )

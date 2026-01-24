@@ -31,16 +31,18 @@ async def get_orders(
 
     status: resting, canceled, executed. limit 1–200.
     """
-    params = _clean({
-        "ticker": ticker,
-        "event_ticker": event_ticker,
-        "min_ts": min_ts,
-        "max_ts": max_ts,
-        "status": status,
-        "limit": limit,
-        "cursor": cursor,
-        "subaccount": subaccount,
-    })
+    params = _clean(
+        {
+            "ticker": ticker,
+            "event_ticker": event_ticker,
+            "min_ts": min_ts,
+            "max_ts": max_ts,
+            "status": status,
+            "limit": limit,
+            "cursor": cursor,
+            "subaccount": subaccount,
+        }
+    )
     return await client.get("/portfolio/orders", params=params or None)
 
 
@@ -81,30 +83,32 @@ async def create_order(
     type: limit|market. time_in_force: fill_or_kill|good_till_canceled|immediate_or_cancel.
     yes_price/no_price 1–99 (cents). subaccount default 0.
     """
-    body = _clean({
-        "ticker": ticker,
-        "side": side,
-        "action": action,
-        "count": count,
-        "count_fp": count_fp,
-        "type": type,
-        "yes_price": yes_price,
-        "no_price": no_price,
-        "yes_price_dollars": yes_price_dollars,
-        "no_price_dollars": no_price_dollars,
-        "client_order_id": client_order_id,
-        "expiration_ts": expiration_ts,
-        "time_in_force": time_in_force,
-        "buy_max_cost": buy_max_cost,
-        "post_only": post_only,
-        "reduce_only": reduce_only,
-        "sell_position_floor": sell_position_floor,
-        "self_trade_prevention_type": self_trade_prevention_type,
-        "order_group_id": order_group_id,
-        "cancel_order_on_pause": cancel_order_on_pause,
-        "subaccount": subaccount,
-        **extra,
-    })
+    body = _clean(
+        {
+            "ticker": ticker,
+            "side": side,
+            "action": action,
+            "count": count,
+            "count_fp": count_fp,
+            "type": type,
+            "yes_price": yes_price,
+            "no_price": no_price,
+            "yes_price_dollars": yes_price_dollars,
+            "no_price_dollars": no_price_dollars,
+            "client_order_id": client_order_id,
+            "expiration_ts": expiration_ts,
+            "time_in_force": time_in_force,
+            "buy_max_cost": buy_max_cost,
+            "post_only": post_only,
+            "reduce_only": reduce_only,
+            "sell_position_floor": sell_position_floor,
+            "self_trade_prevention_type": self_trade_prevention_type,
+            "order_group_id": order_group_id,
+            "cancel_order_on_pause": cancel_order_on_pause,
+            "subaccount": subaccount,
+            **extra,
+        }
+    )
     return await client.post("/portfolio/orders", json=body)
 
 
@@ -127,16 +131,18 @@ async def amend_order(
     **extra: Any,
 ) -> Any:
     """Amend an order. `POST /portfolio/orders/{order_id}/amend`."""
-    body = _clean({
-        "yes_price": yes_price,
-        "no_price": no_price,
-        "yes_price_dollars": yes_price_dollars,
-        "no_price_dollars": no_price_dollars,
-        "count": count,
-        "count_fp": count_fp,
-        "expiration_ts": expiration_ts,
-        **extra,
-    })
+    body = _clean(
+        {
+            "yes_price": yes_price,
+            "no_price": no_price,
+            "yes_price_dollars": yes_price_dollars,
+            "no_price_dollars": no_price_dollars,
+            "count": count,
+            "count_fp": count_fp,
+            "expiration_ts": expiration_ts,
+            **extra,
+        }
+    )
     return await client.post(f"/portfolio/orders/{order_id}/amend", json=body)
 
 
@@ -149,11 +155,13 @@ async def decrease_order(
     **extra: Any,
 ) -> Any:
     """Decrease an order size. `POST /portfolio/orders/{order_id}/decrease`."""
-    body = _clean({
-        "count": count,
-        "count_fp": count_fp,
-        **extra,
-    })
+    body = _clean(
+        {
+            "count": count,
+            "count_fp": count_fp,
+            **extra,
+        }
+    )
     return await client.post(f"/portfolio/orders/{order_id}/decrease", json=body)
 
 
@@ -176,9 +184,11 @@ async def batch_cancel_orders(
 
     Provide order_ids (list) or ticker to cancel by market.
     """
-    body = _clean({
-        "order_ids": order_ids,
-        "ticker": ticker,
-        **extra,
-    })
+    body = _clean(
+        {
+            "order_ids": order_ids,
+            "ticker": ticker,
+            **extra,
+        }
+    )
     return await client.delete("/portfolio/orders/batch", json=body or None)

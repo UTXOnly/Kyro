@@ -9,8 +9,9 @@ from __future__ import annotations
 import base64
 import os
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from kyro.exceptions import KyroError
 
@@ -37,7 +38,9 @@ def _load_private_key(pem_or_path: str | bytes) -> Any:
     return load_pem_private_key(pem, password=None)
 
 
-def _create_signer(key_id: str, private_key: Any) -> Callable[[str, str, bytes | None], dict[str, str]]:
+def _create_signer(
+    key_id: str, private_key: Any
+) -> Callable[[str, str, bytes | None], dict[str, str]]:
     def sign(method: str, path: str, body: bytes | None) -> dict[str, str]:
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.asymmetric import padding
@@ -76,8 +79,8 @@ def config_from_env(*, default_demo: bool = False) -> KyroConfig:
     When both key ID and private key are present, request signing is enabled and auth-required
     endpoints will work. Requires the ``cryptography`` package: ``pip install "kyro[auth]"``.
     """
+
     from kyro._config import KyroConfig
-    from urllib.parse import urlparse
 
     base_url = os.environ.get("KALSHI_BASE_URL", "").strip() or None
     if not base_url:

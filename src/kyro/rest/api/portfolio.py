@@ -37,14 +37,16 @@ async def get_positions(
 
     count_filter: position, total_traded (comma-separated). limit 1–1000.
     """
-    params = _clean({
-        "cursor": cursor,
-        "limit": limit,
-        "count_filter": count_filter,
-        "ticker": ticker,
-        "event_ticker": event_ticker,
-        "subaccount": subaccount,
-    })
+    params = _clean(
+        {
+            "cursor": cursor,
+            "limit": limit,
+            "count_filter": count_filter,
+            "ticker": ticker,
+            "event_ticker": event_ticker,
+            "subaccount": subaccount,
+        }
+    )
     return await client.get("/portfolio/positions", params=params or None)
 
 
@@ -60,15 +62,17 @@ async def get_fills(
     subaccount: int | None = None,
 ) -> Any:
     """Get fill history. `GET /portfolio/fills`."""
-    params = _clean({
-        "ticker": ticker,
-        "event_ticker": event_ticker,
-        "min_ts": min_ts,
-        "max_ts": max_ts,
-        "limit": limit,
-        "cursor": cursor,
-        "subaccount": subaccount,
-    })
+    params = _clean(
+        {
+            "ticker": ticker,
+            "event_ticker": event_ticker,
+            "min_ts": min_ts,
+            "max_ts": max_ts,
+            "limit": limit,
+            "cursor": cursor,
+            "subaccount": subaccount,
+        }
+    )
     return await client.get("/portfolio/fills", params=params or None)
 
 
@@ -84,15 +88,17 @@ async def get_settlements(
     subaccount: int | None = None,
 ) -> Any:
     """Get settlements. `GET /portfolio/settlements`."""
-    params = _clean({
-        "ticker": ticker,
-        "event_ticker": event_ticker,
-        "min_ts": min_ts,
-        "max_ts": max_ts,
-        "limit": limit,
-        "cursor": cursor,
-        "subaccount": subaccount,
-    })
+    params = _clean(
+        {
+            "ticker": ticker,
+            "event_ticker": event_ticker,
+            "min_ts": min_ts,
+            "max_ts": max_ts,
+            "limit": limit,
+            "cursor": cursor,
+            "subaccount": subaccount,
+        }
+    )
     return await client.get("/portfolio/settlements", params=params or None)
 
 

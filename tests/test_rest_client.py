@@ -96,9 +96,7 @@ async def test_patch_json(kyro_client: RestClient) -> None:
 
 
 async def test_delete_with_body(kyro_client: RestClient) -> None:
-    data = await kyro_client.delete(
-        "/portfolio/orders/ord-1"
-    )
+    data = await kyro_client.delete("/portfolio/orders/ord-1")
     assert data is not None
     assert "order" in data or "reduced_by" in data
 

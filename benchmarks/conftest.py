@@ -6,10 +6,9 @@ import asyncio
 
 import pytest
 
+from benchmarks.mock_server import run_server_thread
 from kyro import KyroConfig, RestClient
 from kyro.rest.api import markets
-
-from benchmarks.mock_server import run_server_thread
 
 
 @pytest.fixture
@@ -30,6 +29,7 @@ def bench_config(bench_mock_base_url: str):
 @pytest.fixture
 def bench_ticker(bench_config: KyroConfig):
     """A market ticker from get_markets(limit=1) for orderbook bench. None if none found."""
+
     async def _fetch():
         async with RestClient(bench_config) as client:
             out = await markets.get_markets(client, limit=1)

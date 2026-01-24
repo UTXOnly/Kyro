@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from kyro.exceptions import (
     KyroConnectionError,
     KyroError,
@@ -39,7 +37,12 @@ def test_kyro_http_error_no_error_code() -> None:
 
 def test_kyro_http_error_str_includes_status_error_code_response_body() -> None:
     """str(e) must include status, error_code, and response_body so tracebacks are useful."""
-    err = KyroHTTPError("Kalshi API error", status=404, response_body={"code": "MarketNotFound"}, error_code="MarketNotFound")
+    err = KyroHTTPError(
+        "Kalshi API error",
+        status=404,
+        response_body={"code": "MarketNotFound"},
+        error_code="MarketNotFound",
+    )
     s = str(err)
     assert "status=404" in s
     assert "error_code=" in s

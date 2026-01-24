@@ -58,9 +58,7 @@ def test_config_connect_timeout_bounds() -> None:
 
 
 def test_config_auth_headers() -> None:
-    cfg = KyroConfig(
-        auth_headers={"KALSHI-ACCESS-KEY": "key", "KALSHI-ACCESS-SECRET": "secret"}
-    )
+    cfg = KyroConfig(auth_headers={"KALSHI-ACCESS-KEY": "key", "KALSHI-ACCESS-SECRET": "secret"})
     assert cfg.auth_headers is not None
     assert cfg.auth_headers["KALSHI-ACCESS-KEY"] == "key"
     assert cfg.auth_headers["KALSHI-ACCESS-SECRET"] == "secret"

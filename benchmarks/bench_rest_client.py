@@ -14,7 +14,7 @@ import asyncio
 import pytest
 
 from kyro import RestClient
-from kyro.rest.api import exchange, events, markets, orders, portfolio
+from kyro.rest.api import events, exchange, markets, orders, portfolio
 
 
 async def _one_exchange_status(cfg) -> dict:

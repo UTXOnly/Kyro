@@ -6,13 +6,14 @@ from pydantic import BaseModel
 
 from kyro._serialization import dumps, loads, loads_model
 
-
 # --- Data ---
 
-_MEDIUM: bytes = dumps({
-    "markets": [{"ticker": f"KXBTC-{i:02d}"} for i in range(50)],
-    "cursor": "",
-})
+_MEDIUM: bytes = dumps(
+    {
+        "markets": [{"ticker": f"KXBTC-{i:02d}"} for i in range(50)],
+        "cursor": "",
+    }
+)
 
 
 class _SmallModel(BaseModel):

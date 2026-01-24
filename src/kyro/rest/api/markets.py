@@ -40,22 +40,24 @@ async def get_markets(
     min/max_created_ts, min_updated_ts, min/max_close_ts, min/max_settled_ts,
     mve_filter (only|exclude).
     """
-    params = _clean({
-        "limit": limit,
-        "cursor": cursor,
-        "event_ticker": event_ticker,
-        "series_ticker": series_ticker,
-        "status": status,
-        "tickers": tickers,
-        "min_created_ts": min_created_ts,
-        "max_created_ts": max_created_ts,
-        "min_updated_ts": min_updated_ts,
-        "min_close_ts": min_close_ts,
-        "max_close_ts": max_close_ts,
-        "min_settled_ts": min_settled_ts,
-        "max_settled_ts": max_settled_ts,
-        "mve_filter": mve_filter,
-    })
+    params = _clean(
+        {
+            "limit": limit,
+            "cursor": cursor,
+            "event_ticker": event_ticker,
+            "series_ticker": series_ticker,
+            "status": status,
+            "tickers": tickers,
+            "min_created_ts": min_created_ts,
+            "max_created_ts": max_created_ts,
+            "min_updated_ts": min_updated_ts,
+            "min_close_ts": min_close_ts,
+            "max_close_ts": max_close_ts,
+            "min_settled_ts": min_settled_ts,
+            "max_settled_ts": max_settled_ts,
+            "mve_filter": mve_filter,
+        }
+    )
     return await client.get("/markets", params=params or None)
 
 
@@ -91,13 +93,15 @@ async def get_trades(
 
     Query: limit (1–1000), cursor, ticker, min_ts, max_ts (Unix).
     """
-    params = _clean({
-        "limit": limit,
-        "cursor": cursor,
-        "ticker": ticker,
-        "min_ts": min_ts,
-        "max_ts": max_ts,
-    })
+    params = _clean(
+        {
+            "limit": limit,
+            "cursor": cursor,
+            "ticker": ticker,
+            "min_ts": min_ts,
+            "max_ts": max_ts,
+        }
+    )
     return await client.get("/markets/trades", params=params or None)
 
 
@@ -114,12 +118,14 @@ async def get_market_candlesticks(
 
     Query: start_ts, end_ts (Unix), period_interval (seconds), limit.
     """
-    params = _clean({
-        "start_ts": start_ts,
-        "end_ts": end_ts,
-        "period_interval": period_interval,
-        "limit": limit,
-    })
+    params = _clean(
+        {
+            "start_ts": start_ts,
+            "end_ts": end_ts,
+            "period_interval": period_interval,
+            "limit": limit,
+        }
+    )
     return await client.get(f"/markets/{ticker}/candlesticks", params=params or None)
 
 

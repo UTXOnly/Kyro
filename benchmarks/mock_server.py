@@ -17,12 +17,10 @@ import time
 
 from aiohttp import web
 
-
 # --- Richer mock payloads (benchmark‑realistic) ---
 
 MOCK_MARKETS = [
-    {"ticker": f"MOCK-{i:02d}", "title": f"Mock market {i}", "status": "open"}
-    for i in range(1, 11)
+    {"ticker": f"MOCK-{i:02d}", "title": f"Mock market {i}", "status": "open"} for i in range(1, 11)
 ]
 
 MOCK_EVENTS = [

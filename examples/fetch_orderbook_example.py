@@ -21,7 +21,7 @@ from __future__ import annotations
 import asyncio
 import sys
 
-from kyro import config_from_env, RestClient
+from kyro import RestClient, config_from_env
 from kyro.exceptions import KyroHTTPError
 from kyro.rest import events, markets
 
@@ -82,7 +82,9 @@ async def main() -> None:
             print(f"  {title_ev}")
 
             # 2) Fetch markets for that event (an event can have multiple markets)
-            resp = await markets.get_markets(client, event_ticker=event_ticker, limit=5, status="open")
+            resp = await markets.get_markets(
+                client, event_ticker=event_ticker, limit=5, status="open"
+            )
             ms = resp.get("markets") or []
             if not ms:
                 resp = await markets.get_markets(client, event_ticker=event_ticker, limit=5)
@@ -102,10 +104,14 @@ async def main() -> None:
             # 3) Fetch orderbook and print
             ob_resp = await markets.get_market_orderbook(client, ticker, depth=10)
             parsed = parse_orderbook(ob_resp)
-            print(f"\nOrderbook:")
-            print(f"  best yes bid={parsed['best_yes_bid']}¢  best yes ask={parsed['best_yes_ask']}¢")
+            print("\nOrderbook:")
+            print(
+                f"  best yes bid={parsed['best_yes_bid']}¢  best yes ask={parsed['best_yes_ask']}¢"
+            )
             print(f"  best no  bid={parsed['best_no_bid']}¢  best no  ask={parsed['best_no_ask']}¢")
-            print(f"  mid={parsed['mid_yes']}¢  spread={parsed['spread_yes']}¢  top5_size={parsed['total_top_liquidity']}")
+            print(
+                f"  mid={parsed['mid_yes']}¢  spread={parsed['spread_yes']}¢  top5_size={parsed['total_top_liquidity']}"
+            )
             print()
     except KyroHTTPError as e:
         if e.status == 401:

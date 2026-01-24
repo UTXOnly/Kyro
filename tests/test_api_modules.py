@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from kyro import RestClient
-from kyro.rest.api import exchange, events, markets, orders, portfolio
+from kyro.rest.api import events, exchange, markets, orders, portfolio
 
 
 async def test_get_exchange_status(kyro_client: RestClient) -> None:
@@ -20,9 +20,7 @@ async def test_get_markets(kyro_client: RestClient) -> None:
 
 
 async def test_get_markets_with_params(kyro_client: RestClient) -> None:
-    data = await markets.get_markets(
-        kyro_client, limit=10, event_ticker="KXBTC-25", status="open"
-    )
+    data = await markets.get_markets(kyro_client, limit=10, event_ticker="KXBTC-25", status="open")
     assert "markets" in data
 
 
