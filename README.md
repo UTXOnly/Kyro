@@ -161,31 +161,6 @@ From **repo root** with kyro installed (venv activated, `pip install -e .` or `.
 
 ---
 
-## Low-level REST client
-
-For paths not covered by the modular API, use the generic client:
-
-```python
-from kyro import RestClient, KyroConfig
-from pydantic import BaseModel
-
-async with RestClient(KyroConfig()) as client:
-    # GET with query params
-    data = await client.get("/exchange/status")
-
-    # GET with optional Pydantic validation
-    class Market(BaseModel):
-        ticker: str
-        title: str | None = None
-    m = await client.get("/markets/KXBTC-24JAN15", response_model=Market)
-
-    # POST / PUT / PATCH / DELETE
-    await client.post("/portfolio/orders", json={"ticker": "KXBTC", "side": "yes", "action": "buy", "count": 1, "yes_price": 50})
-    await client.delete("/portfolio/orders/order-id-here")
-```
-
----
-
 ## Error handling
 
 All exceptions inherit from `KyroError`. Use the specific types to branch on API errors, timeouts, connection failures, or validation (Pydantic) issues:
