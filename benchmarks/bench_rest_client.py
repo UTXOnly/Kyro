@@ -28,6 +28,7 @@ from kyro.rest.api import events, exchange, markets, orders, portfolio
 # Requests per benchmark iteration; shared client amortizes loop/session overhead.
 REQUESTS_PER_ROUND = 100
 
+
 def test_get_exchange_status(benchmark: object, bench_config) -> None:
     async def _run() -> None:
         async with RestClient(bench_config) as client:

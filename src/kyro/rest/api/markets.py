@@ -136,7 +136,9 @@ async def get_market_candlesticks(
             "include_latest_before_start": include_latest_before_start,
         }
     )
-    return await client.get(f"/series/{series_ticker}/markets/{ticker}/candlesticks", params=params or None)
+    return await client.get(
+        f"/series/{series_ticker}/markets/{ticker}/candlesticks", params=params or None
+    )
 
 
 async def get_series(

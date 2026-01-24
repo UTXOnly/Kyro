@@ -34,15 +34,15 @@ import json
 import os
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from kyro import RestClient, config_from_env
 from kyro.exceptions import KyroConnectionError, KyroHTTPError, KyroTimeoutError
 from kyro.rest import events, exchange, markets, orders, portfolio
-
 
 AUDIT_LOG_ENV = "KALSHI_SMOKE_AUDIT_LOG"
 DEFAULT_AUDIT_LOG = "live_smoke_audit.log"
@@ -52,12 +52,24 @@ DEBUG = os.environ.get("KALSHI_SMOKE_DEBUG", "").lower() in ("1", "true", "yes")
 PATH_HINTS: dict[tuple[str, str], str] = {
     ("exchange", "get_series_fee_changes"): "GET /series/fee_changes",
     ("exchange", "get_user_data_timestamp"): "GET /exchange/user-data-timestamp",
-    ("markets", "get_market_candlesticks"): "GET /series/{series_ticker}/markets/{ticker}/candlesticks?start_ts=&end_ts=&period_interval=1|60|1440",
-    ("markets", "get_live_data"): "Kalshi: GET /live_data/{type}/milestone/{milestone_id} (ticker-based not in Kalshi spec)",
-    ("markets", "get_multiple_live_data"): "Kalshi: GET /live_data/.../milestone/... (ticker-based not in Kalshi spec)",
-    ("portfolio", "get_total_resting_order_value"): "GET /portfolio/summary/total_resting_order_value (FCM-oriented, may 404)",
+    (
+        "markets",
+        "get_market_candlesticks",
+    ): "GET /series/{series_ticker}/markets/{ticker}/candlesticks?start_ts=&end_ts=&period_interval=1|60|1440",
+    (
+        "markets",
+        "get_live_data",
+    ): "Kalshi: GET /live_data/{type}/milestone/{milestone_id} (ticker-based not in Kalshi spec)",
+    (
+        "markets",
+        "get_multiple_live_data",
+    ): "Kalshi: GET /live_data/.../milestone/... (ticker-based not in Kalshi spec)",
+    (
+        "portfolio",
+        "get_total_resting_order_value",
+    ): "GET /portfolio/summary/total_resting_order_value (FCM-oriented, may 404)",
     ("orders", "batch_create_orders"): "POST /portfolio/orders/batched",
-    ("orders", "batch_cancel_orders"): "DELETE /portfolio/orders/batched body {\"ids\":[...]}",
+    ("orders", "batch_cancel_orders"): 'DELETE /portfolio/orders/batched body {"ids":[...]}',
     ("orders", "cancel_order"): "DELETE /portfolio/orders/{order_id}",
 }
 
@@ -120,7 +132,9 @@ def _write_debug(
 
 async def _discover_market(client: RestClient, ctx: dict, log_file: Any) -> None:
     """Find a market where get_market and get_market_candlesticks both return 200."""
-    log_file.write(f"--- {_ts()} ---\nDISCOVER get_markets\nREQUEST: {_log_json({'status': 'open', 'limit': 100})}\n")
+    log_file.write(
+        f"--- {_ts()} ---\nDISCOVER get_markets\nREQUEST: {_log_json({'status': 'open', 'limit': 100})}\n"
+    )
     log_file.flush()
     r = await markets.get_markets(client, status="open", limit=100)
     ms = (r or {}).get("markets") or []
@@ -145,14 +159,20 @@ async def _discover_market(client: RestClient, ctx: dict, log_file: Any) -> None
         series = m.get("series_ticker") or None
         if not series:
             if DEBUG:
-                log_file.write(f"  discover try {t}: get_market=ok, skip candlesticks (no series_ticker)\n")
+                log_file.write(
+                    f"  discover try {t}: get_market=ok, skip candlesticks (no series_ticker)\n"
+                )
                 log_file.flush()
             continue
         try:
-            await markets.get_market_candlesticks(client, t, series_ticker=series, limit=5, period_interval=60)
+            await markets.get_market_candlesticks(
+                client, t, series_ticker=series, limit=5, period_interval=60
+            )
         except KyroHTTPError:
             if DEBUG:
-                log_file.write(f"  discover try {t} (series={m.get('series_ticker','')}): get_market=ok get_candlesticks=404\n")
+                log_file.write(
+                    f"  discover try {t} (series={m.get('series_ticker','')}): get_market=ok get_candlesticks=404\n"
+                )
                 log_file.flush()
             continue
         ctx["ticker"] = t
@@ -160,7 +180,9 @@ async def _discover_market(client: RestClient, ctx: dict, log_file: Any) -> None
             ctx["event_ticker"] = m["event_ticker"]
         if m.get("series_ticker"):
             ctx["series_ticker"] = m["series_ticker"]
-        log_file.write(f"SELECTED: {t} (get_market + get_market_candlesticks 200) series_ticker={ctx.get('series_ticker','')}\n---\n\n")
+        log_file.write(
+            f"SELECTED: {t} (get_market + get_market_candlesticks 200) series_ticker={ctx.get('series_ticker','')}\n---\n\n"
+        )
         log_file.flush()
         return
     for m in ms:
@@ -176,10 +198,14 @@ async def _discover_market(client: RestClient, ctx: dict, log_file: Any) -> None
             ctx["event_ticker"] = m["event_ticker"]
         if m.get("series_ticker"):
             ctx["series_ticker"] = m["series_ticker"]
-        log_file.write(f"SELECTED: {t} (get_market 200; candlesticks 404 for all) series_ticker={ctx.get('series_ticker','')}\n---\n\n")
+        log_file.write(
+            f"SELECTED: {t} (get_market 200; candlesticks 404 for all) series_ticker={ctx.get('series_ticker','')}\n---\n\n"
+        )
         log_file.flush()
         return
-    raise SystemExit("No suitable market found (get_market or get_market_candlesticks did not return 200 for any of 100 markets).")
+    raise SystemExit(
+        "No suitable market found (get_market or get_market_candlesticks did not return 200 for any of 100 markets)."
+    )
 
 
 # --- Context helpers ---
@@ -252,7 +278,7 @@ async def _run_and_log(
     except KyroHTTPError as e:
         if e.status in (401, 403):
             if (module, method) in ACCEPT_403:
-                log_file.write(f"NOTE: 403 (subaccounts not enabled on this account)\n---\n\n")
+                log_file.write("NOTE: 403 (subaccounts not enabled on this account)\n---\n\n")
                 log_file.flush()
                 results.append(Result(module, method, "ok", "403 (subaccounts not enabled)"))
             else:
@@ -260,7 +286,12 @@ async def _run_and_log(
                 log_file.write(f"ERROR: auth {e.status}\n---\n\n")
                 log_file.flush()
                 results.append(
-                    Result(module, method, "fail", f"{e.status} (auth rejected; check key in .env and path for KALSHI_PRIVATE_KEY_PATH)")
+                    Result(
+                        module,
+                        method,
+                        "fail",
+                        f"{e.status} (auth rejected; check key in .env and path for KALSHI_PRIVATE_KEY_PATH)",
+                    )
                 )
         else:
             _write_debug(log_file, module, method, req, ctx, e)
@@ -273,7 +304,9 @@ async def _run_and_log(
         log_file.flush()
         results.append(Result(module, method, "fail", str(e)))
     except Exception as e:
-        if (module, method) == ("portfolio", "transfer_between_subaccounts") and "skipped" in str(e):
+        if (module, method) == ("portfolio", "transfer_between_subaccounts") and "skipped" in str(
+            e
+        ):
             log_file.write(f"NOTE: {e}\n---\n\n")
             log_file.flush()
             results.append(Result(module, method, "ok", str(e)))
@@ -287,56 +320,238 @@ async def _run_and_log(
 # --- Case definitions: (module, method, coro, request_info). Only 2xx = pass. ---
 
 # 403 on these is treated as ok (subaccounts not enabled on account)
-ACCEPT_403 = frozenset({
-    ("portfolio", "get_all_subaccount_balances"),
-    ("portfolio", "get_subaccount_transfers"),
-    ("portfolio", "create_subaccount"),
-})
+ACCEPT_403 = frozenset(
+    {
+        ("portfolio", "get_all_subaccount_balances"),
+        ("portfolio", "get_subaccount_transfers"),
+        ("portfolio", "create_subaccount"),
+    }
+)
 
 READ_ONLY: list[tuple[str, str, Any, Any]] = [
     ("exchange", "get_exchange_status", lambda c, x: exchange.get_exchange_status(c), {}),
-    ("exchange", "get_exchange_announcements", lambda c, x: exchange.get_exchange_announcements(c), {}),
+    (
+        "exchange",
+        "get_exchange_announcements",
+        lambda c, x: exchange.get_exchange_announcements(c),
+        {},
+    ),
     ("exchange", "get_exchange_schedule", lambda c, x: exchange.get_exchange_schedule(c), {}),
     ("exchange", "get_series_fee_changes", lambda c, x: exchange.get_series_fee_changes(c), {}),
     ("exchange", "get_user_data_timestamp", lambda c, x: exchange.get_user_data_timestamp(c), {}),
     ("events", "get_events", _get_events, {"limit": 5}),
-    ("events", "get_event", lambda c, x: events.get_event(c, _event_ticker(x)), lambda ctx: {"event_ticker": _event_ticker(ctx)}),
-    ("events", "get_event_metadata", lambda c, x: events.get_event_metadata(c, _event_ticker(x)), lambda ctx: {"event_ticker": _event_ticker(ctx)}),
-    ("events", "get_multivariate_events", lambda c, x: events.get_multivariate_events(c, limit=5), {"limit": 5}),
+    (
+        "events",
+        "get_event",
+        lambda c, x: events.get_event(c, _event_ticker(x)),
+        lambda ctx: {"event_ticker": _event_ticker(ctx)},
+    ),
+    (
+        "events",
+        "get_event_metadata",
+        lambda c, x: events.get_event_metadata(c, _event_ticker(x)),
+        lambda ctx: {"event_ticker": _event_ticker(ctx)},
+    ),
+    (
+        "events",
+        "get_multivariate_events",
+        lambda c, x: events.get_multivariate_events(c, limit=5),
+        {"limit": 5},
+    ),
     ("markets", "get_markets", _get_markets, {"limit": 5}),
-    ("markets", "get_market", lambda c, x: markets.get_market(c, _ticker(x)), lambda ctx: {"ticker": _ticker(ctx)}),
-    ("markets", "get_market_orderbook", lambda c, x: markets.get_market_orderbook(c, _ticker(x)), lambda ctx: {"ticker": _ticker(ctx)}),
+    (
+        "markets",
+        "get_market",
+        lambda c, x: markets.get_market(c, _ticker(x)),
+        lambda ctx: {"ticker": _ticker(ctx)},
+    ),
+    (
+        "markets",
+        "get_market_orderbook",
+        lambda c, x: markets.get_market_orderbook(c, _ticker(x)),
+        lambda ctx: {"ticker": _ticker(ctx)},
+    ),
     ("markets", "get_trades", lambda c, x: markets.get_trades(c, limit=5), {"limit": 5}),
-    ("markets", "get_market_candlesticks", lambda c, x: markets.get_market_candlesticks(c, _ticker(x), series_ticker=_series_ticker(x), limit=5, period_interval=60), lambda ctx: {"ticker": _ticker(ctx), "series_ticker": _series_ticker(ctx), "limit": 5, "period_interval": 60}),
+    (
+        "markets",
+        "get_market_candlesticks",
+        lambda c, x: markets.get_market_candlesticks(
+            c, _ticker(x), series_ticker=_series_ticker(x), limit=5, period_interval=60
+        ),
+        lambda ctx: {
+            "ticker": _ticker(ctx),
+            "series_ticker": _series_ticker(ctx),
+            "limit": 5,
+            "period_interval": 60,
+        },
+    ),
     ("markets", "get_series_list", _get_series_list, {"limit": 5}),
-    ("markets", "get_series", lambda c, x: markets.get_series(c, _series_ticker(x)), lambda ctx: {"series_ticker": _series_ticker(ctx)}),
-    ("markets", "get_live_data", lambda c, x: markets.get_live_data(c, _ticker(x)), lambda ctx: {"ticker": _ticker(ctx)}),
-    ("markets", "get_multiple_live_data", lambda c, x: markets.get_multiple_live_data(c, _ticker(x)), lambda ctx: {"tickers": _ticker(ctx)}),
+    (
+        "markets",
+        "get_series",
+        lambda c, x: markets.get_series(c, _series_ticker(x)),
+        lambda ctx: {"series_ticker": _series_ticker(ctx)},
+    ),
+    (
+        "markets",
+        "get_live_data",
+        lambda c, x: markets.get_live_data(c, _ticker(x)),
+        lambda ctx: {"ticker": _ticker(ctx)},
+    ),
+    (
+        "markets",
+        "get_multiple_live_data",
+        lambda c, x: markets.get_multiple_live_data(c, _ticker(x)),
+        lambda ctx: {"tickers": _ticker(ctx)},
+    ),
     ("orders", "get_orders", lambda c, x: orders.get_orders(c, limit=5), {"limit": 5}),
     ("portfolio", "get_balance", lambda c, x: portfolio.get_balance(c), {}),
     ("portfolio", "get_positions", lambda c, x: portfolio.get_positions(c, limit=5), {"limit": 5}),
     ("portfolio", "get_fills", lambda c, x: portfolio.get_fills(c, limit=5), {"limit": 5}),
-    ("portfolio", "get_settlements", lambda c, x: portfolio.get_settlements(c, limit=5), {"limit": 5}),
-    ("portfolio", "get_total_resting_order_value", lambda c, x: portfolio.get_total_resting_order_value(c), {}),
-    ("portfolio", "get_all_subaccount_balances", lambda c, x: portfolio.get_all_subaccount_balances(c), {}),
-    ("portfolio", "get_subaccount_transfers", lambda c, x: portfolio.get_subaccount_transfers(c, limit=5), {"limit": 5}),
+    (
+        "portfolio",
+        "get_settlements",
+        lambda c, x: portfolio.get_settlements(c, limit=5),
+        {"limit": 5},
+    ),
+    (
+        "portfolio",
+        "get_total_resting_order_value",
+        lambda c, x: portfolio.get_total_resting_order_value(c),
+        {},
+    ),
+    (
+        "portfolio",
+        "get_all_subaccount_balances",
+        lambda c, x: portfolio.get_all_subaccount_balances(c),
+        {},
+    ),
+    (
+        "portfolio",
+        "get_subaccount_transfers",
+        lambda c, x: portfolio.get_subaccount_transfers(c, limit=5),
+        {"limit": 5},
+    ),
 ]
 
 
 def _mutating_cases() -> list[tuple[str, str, Any, Any]]:
     """(module, method, coro, request_info). Order matters."""
     return [
-        ("orders", "create_order", _create_order_1, lambda ctx: {"ticker": ctx["ticker"], "side": "yes", "action": "buy", "count": 1, "type": "limit", "yes_price": 1, "time_in_force": "good_till_canceled"}),
-        ("orders", "get_order", lambda c, x: orders.get_order(c, x["order_id"]), lambda ctx: {"order_id": ctx.get("order_id")}),
-        ("orders", "amend_order", _amend_order, lambda ctx: {"order_id": ctx.get("order_id"), "ticker": ctx.get("ticker"), "side": "yes", "action": "buy", "client_order_id": ctx.get("client_order_id"), "yes_price": 2}),
-        ("orders", "cancel_order", lambda c, x: orders.cancel_order(c, x["order_id"]), lambda ctx: {"order_id": ctx.get("order_id")}),
-        ("orders", "create_order", _create_order_2, lambda ctx: {"ticker": ctx["ticker"], "side": "yes", "action": "buy", "count": 2, "type": "limit", "yes_price": 1, "time_in_force": "good_till_canceled"}),
-        ("orders", "decrease_order", lambda c, x: orders.decrease_order(c, x["order_id_2"], reduce_by=1), lambda ctx: {"order_id": ctx.get("order_id_2"), "reduce_by": 1}),
-        ("orders", "cancel_order", lambda c, x: orders.cancel_order(c, x["order_id_2"]), lambda ctx: {"order_id": ctx.get("order_id_2")}),
-        ("orders", "batch_create_orders", _batch_create, lambda ctx: {"orders": [{"ticker": ctx["ticker"], "side": "yes", "action": "buy", "count": 1, "type": "limit", "yes_price": 1, "time_in_force": "good_till_canceled"}, {"ticker": ctx["ticker"], "side": "no", "action": "buy", "count": 1, "type": "limit", "no_price": 1, "time_in_force": "good_till_canceled"}]}),
-        ("orders", "batch_cancel_orders", lambda c, x: orders.batch_cancel_orders(c, order_ids=x.get("batch_order_ids") or []), lambda ctx: {"order_ids": ctx.get("batch_order_ids", [])}),
-        ("portfolio", "create_subaccount", _create_subaccount, lambda ctx: {"nickname": f"smoke-{int(time.time())}"}),
-        ("portfolio", "transfer_between_subaccounts", _transfer_between_subaccounts, lambda ctx: {"from_subaccount": 0, "to_subaccount": ctx.get("created_subaccount_id"), "amount": 1}),
+        (
+            "orders",
+            "create_order",
+            _create_order_1,
+            lambda ctx: {
+                "ticker": ctx["ticker"],
+                "side": "yes",
+                "action": "buy",
+                "count": 1,
+                "type": "limit",
+                "yes_price": 1,
+                "time_in_force": "good_till_canceled",
+            },
+        ),
+        (
+            "orders",
+            "get_order",
+            lambda c, x: orders.get_order(c, x["order_id"]),
+            lambda ctx: {"order_id": ctx.get("order_id")},
+        ),
+        (
+            "orders",
+            "amend_order",
+            _amend_order,
+            lambda ctx: {
+                "order_id": ctx.get("order_id"),
+                "ticker": ctx.get("ticker"),
+                "side": "yes",
+                "action": "buy",
+                "client_order_id": ctx.get("client_order_id"),
+                "yes_price": 2,
+            },
+        ),
+        (
+            "orders",
+            "cancel_order",
+            lambda c, x: orders.cancel_order(c, x["order_id"]),
+            lambda ctx: {"order_id": ctx.get("order_id")},
+        ),
+        (
+            "orders",
+            "create_order",
+            _create_order_2,
+            lambda ctx: {
+                "ticker": ctx["ticker"],
+                "side": "yes",
+                "action": "buy",
+                "count": 2,
+                "type": "limit",
+                "yes_price": 1,
+                "time_in_force": "good_till_canceled",
+            },
+        ),
+        (
+            "orders",
+            "decrease_order",
+            lambda c, x: orders.decrease_order(c, x["order_id_2"], reduce_by=1),
+            lambda ctx: {"order_id": ctx.get("order_id_2"), "reduce_by": 1},
+        ),
+        (
+            "orders",
+            "cancel_order",
+            lambda c, x: orders.cancel_order(c, x["order_id_2"]),
+            lambda ctx: {"order_id": ctx.get("order_id_2")},
+        ),
+        (
+            "orders",
+            "batch_create_orders",
+            _batch_create,
+            lambda ctx: {
+                "orders": [
+                    {
+                        "ticker": ctx["ticker"],
+                        "side": "yes",
+                        "action": "buy",
+                        "count": 1,
+                        "type": "limit",
+                        "yes_price": 1,
+                        "time_in_force": "good_till_canceled",
+                    },
+                    {
+                        "ticker": ctx["ticker"],
+                        "side": "no",
+                        "action": "buy",
+                        "count": 1,
+                        "type": "limit",
+                        "no_price": 1,
+                        "time_in_force": "good_till_canceled",
+                    },
+                ]
+            },
+        ),
+        (
+            "orders",
+            "batch_cancel_orders",
+            lambda c, x: orders.batch_cancel_orders(c, order_ids=x.get("batch_order_ids") or []),
+            lambda ctx: {"order_ids": ctx.get("batch_order_ids", [])},
+        ),
+        (
+            "portfolio",
+            "create_subaccount",
+            _create_subaccount,
+            lambda ctx: {"nickname": f"smoke-{int(time.time())}"},
+        ),
+        (
+            "portfolio",
+            "transfer_between_subaccounts",
+            _transfer_between_subaccounts,
+            lambda ctx: {
+                "from_subaccount": 0,
+                "to_subaccount": ctx.get("created_subaccount_id"),
+                "amount": 1,
+            },
+        ),
     ]
 
 
@@ -395,8 +610,24 @@ async def _create_order_2(client: RestClient, ctx: dict) -> Any:
 
 async def _batch_create(client: RestClient, ctx: dict) -> Any:
     body = [
-        {"ticker": ctx["ticker"], "side": "yes", "action": "buy", "count": 1, "type": "limit", "yes_price": 1, "time_in_force": "good_till_canceled"},
-        {"ticker": ctx["ticker"], "side": "no", "action": "buy", "count": 1, "type": "limit", "no_price": 1, "time_in_force": "good_till_canceled"},
+        {
+            "ticker": ctx["ticker"],
+            "side": "yes",
+            "action": "buy",
+            "count": 1,
+            "type": "limit",
+            "yes_price": 1,
+            "time_in_force": "good_till_canceled",
+        },
+        {
+            "ticker": ctx["ticker"],
+            "side": "no",
+            "action": "buy",
+            "count": 1,
+            "type": "limit",
+            "no_price": 1,
+            "time_in_force": "good_till_canceled",
+        },
     ]
     r = await orders.batch_create_orders(client, body)
     lst = (r or {}).get("orders") or (r or {}).get("order") or []
@@ -430,6 +661,7 @@ async def main() -> None:
     project_root = Path(__file__).resolve().parent.parent
     try:
         from dotenv import load_dotenv
+
         load_dotenv(project_root / ".env")
     except ImportError:
         pass
@@ -460,12 +692,16 @@ async def main() -> None:
 
         _log(f"# Live API smoke audit — {_ts()}\n")
         _log(f"# base_url: {cfg.base_url}\n")
-        _log("# Auth: KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY/KALSHI_PRIVATE_KEY_PATH from environment\n\n")
+        _log(
+            "# Auth: KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY/KALSHI_PRIVATE_KEY_PATH from environment\n\n"
+        )
 
         async with RestClient(cfg) as client:
             await _discover_market(client, ctx, log_file)
             print(f"Live API smoke test — {cfg.base_url}")
-            print(f"Discovered ticker: {ctx.get('ticker')} (series_ticker: {ctx.get('series_ticker', '')})")
+            print(
+                f"Discovered ticker: {ctx.get('ticker')} (series_ticker: {ctx.get('series_ticker', '')})"
+            )
             print(f"Audit log: {log_path}")
             if DEBUG:
                 print("DEBUG=1: path hints and full response_body on failures")

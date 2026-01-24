@@ -45,7 +45,11 @@ async def get_series_fee_changes(
 
     Query: series_ticker, show_historical (default false).
     """
-    params = {k: v for k, v in (("series_ticker", series_ticker), ("show_historical", show_historical)) if v is not None}
+    params = {
+        k: v
+        for k, v in (("series_ticker", series_ticker), ("show_historical", show_historical))
+        if v is not None
+    }
     return await client.get("/series/fee_changes", params=params or None)
 
 

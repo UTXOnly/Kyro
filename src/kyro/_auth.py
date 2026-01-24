@@ -85,6 +85,7 @@ def config_from_env(*, default_demo: bool = False) -> KyroConfig:
     """
     try:
         from dotenv import load_dotenv
+
         load_dotenv()
     except ImportError:
         pass
