@@ -233,12 +233,8 @@ Traceback (most recent call last):
   File "kyro/rest/api/markets.py", line 65, in get_market
     return await client.get(f"/markets/{ticker}")
   File "kyro/rest/client.py", line 134, in _request
-    raise KyroHTTPError(
-        "Kalshi API error", status=status, response_body=parsed, error_code=err_code
-    )
-kyro.exceptions.KyroHTTPError: Kalshi API error: status=404,
-  error_code='MarketNotFound',
-  response_body="{'code': 'MarketNotFound', 'message': 'Market not found'}"
+    raise KyroHTTPError("Kalshi API error", status=status, response_body=parsed, error_code=err_code)
+kyro.exceptions.KyroHTTPError: Kalshi API error: status=404, error_code='MarketNotFound', response_body="{'code': 'MarketNotFound', 'message': 'Market not found'}"
 ```
 
 **`KyroTimeoutError`** (request exceeded `request_timeout`):
@@ -250,9 +246,7 @@ Traceback (most recent call last):
   File "kyro/rest/api/markets.py", line 59, in get_markets
     return await client.get("/markets", params=params or None)
   File "kyro/rest/client.py", line 119, in _request
-    raise KyroTimeoutError(
-        str(e) or "Request timed out", timeout=30.0
-    ) from e
+    raise KyroTimeoutError(str(e) or "Request timed out", timeout=30.0) from e
 kyro.exceptions.KyroTimeoutError: Request timed out
 ```
 
@@ -266,8 +260,7 @@ Traceback (most recent call last):
     return await client.get("/exchange/status")
   File "kyro/rest/client.py", line 130, in _request
     raise KyroConnectionError(str(e)) from e
-kyro.exceptions.KyroConnectionError: Cannot connect to host
-  demo-api.kalshi.co:443 ssl:True [Connection refused]
+kyro.exceptions.KyroConnectionError: Cannot connect to host demo-api.kalshi.co:443 ssl:True [Connection refused]
 ```
 
 **`KyroValidationError`** (Pydantic schema mismatch, invalid JSON, or bad request body):
@@ -279,11 +272,8 @@ Traceback (most recent call last):
   File "kyro/rest/client.py", line 139, in _request
     return loads_model(raw, response_model)
   File "kyro/_serialization.py", line 110, in loads_model
-    raise KyroValidationError(
-        f"Validation failed for {model.__name__}: {e}", details=e.errors()
-    ) from e
-kyro.exceptions.KyroValidationError: Validation failed for Market:
-  1 validation error for Market
+    raise KyroValidationError(f"Validation failed for {model.__name__}: {e}", details=e.errors()) from e
+kyro.exceptions.KyroValidationError: Validation failed for Market: 1 validation error for Market
 ticker
   Field required [type=missing, input_value={}, input_type=dict]
 ```
