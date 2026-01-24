@@ -20,14 +20,14 @@ class KyroConfig(BaseModel):
     Example:
         >>> from kyro import RestClient
         >>> from kyro._config import KyroConfig
-        >>> cfg = KyroConfig(base_url="https://trading-api.kalshi.com/v2")
+        >>> cfg = KyroConfig(base_url="https://api.elections.kalshi.com/trade-api/v2")
         >>> async with RestClient(cfg) as client:
         ...     markets = await client.get("/markets")
     """
 
     base_url: HttpUrl = Field(
-        default="https://trading-api.kalshi.com/v2",
-        description="Kalshi API base URL (production). Use demo base for testing.",
+        default="https://api.elections.kalshi.com/trade-api/v2",
+        description="Kalshi API base URL (production). Use https://demo-api.kalshi.co/trade-api/v2 for demo.",
     )
     request_timeout: float = Field(
         default=30.0,

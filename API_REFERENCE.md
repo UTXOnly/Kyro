@@ -4,7 +4,7 @@ Request/response documentation for every modular method: **exchange**, **markets
 
 - **Import:** `from kyro.rest import exchange, markets, events, orders, portfolio`
 - **Client:** Pass `RestClient` as the first argument: `await exchange.get_exchange_status(client)`
-- **Base path:** `{KyroConfig.base_url}` (e.g. `https://trading-api.kalshi.com/v2`)
+- **Base path:** `{KyroConfig.base_url}` (e.g. `https://api.elections.kalshi.com/trade-api/v2`)
 - **Auth:** Endpoints marked *Auth required* need `KyroConfig(auth_headers={...})` with KALSHI-ACCESS-KEY, TIMESTAMP, SIGNATURE.
 
 ---

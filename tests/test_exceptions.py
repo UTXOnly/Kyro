@@ -37,6 +37,16 @@ def test_kyro_http_error_no_error_code() -> None:
     assert err.error_code is None
 
 
+def test_kyro_http_error_str_includes_status_error_code_response_body() -> None:
+    """str(e) must include status, error_code, and response_body so tracebacks are useful."""
+    err = KyroHTTPError("Kalshi API error", status=404, response_body={"code": "MarketNotFound"}, error_code="MarketNotFound")
+    s = str(err)
+    assert "status=404" in s
+    assert "error_code=" in s
+    assert "MarketNotFound" in s
+    assert "response_body=" in s
+
+
 def test_kyro_connection_error() -> None:
     err = KyroConnectionError("Connection refused")
     assert isinstance(err, KyroError)

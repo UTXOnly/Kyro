@@ -38,8 +38,8 @@ pip install -e .
 ```python
 from kyro import KyroConfig
 
-# Production (default)
-cfg = KyroConfig(base_url="https://trading-api.kalshi.com/v2")
+# Production (default). Despite "elections" in the host, this serves all Kalshi markets.
+cfg = KyroConfig(base_url="https://api.elections.kalshi.com/trade-api/v2")
 
 # Demo
 cfg = KyroConfig(base_url="https://demo-api.kalshi.co/trade-api/v2")

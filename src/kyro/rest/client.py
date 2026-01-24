@@ -84,7 +84,9 @@ class RestClient:
         response_model: type[T] | None = None,
     ) -> Any:
         session = self._ensure_session()
-        url = path if path.startswith("/") else f"/{path}"
+        # Use a relative path so aiohttp appends to base_url. A leading / would
+        # replace the base path (RFC 3986) and drop /trade-api/v2.
+        url = path.lstrip("/")
         extra_headers: dict[str, str] | None = None
         body: bytes | None = None
         if json is not None:
@@ -120,12 +122,7 @@ class RestClient:
 
         if status >= 400:
             parsed, err_code = self._parse_error_body(raw)
-            raise KyroHTTPError(
-                f"Kalshi API error: {status}",
-                status=status,
-                response_body=parsed,
-                error_code=err_code,
-            )
+            raise KyroHTTPError("Kalshi API error", status=status, response_body=parsed, error_code=err_code)
 
         if not raw:
             return None

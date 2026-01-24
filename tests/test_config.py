@@ -10,7 +10,7 @@ from kyro import KyroConfig
 
 def test_config_defaults() -> None:
     cfg = KyroConfig()
-    assert str(cfg.base_url) == "https://trading-api.kalshi.com/v2"
+    assert str(cfg.base_url) == "https://api.elections.kalshi.com/trade-api/v2"
     assert cfg.request_timeout == 30.0
     assert cfg.connect_timeout == 10.0
     assert cfg.default_headers.get("Accept") == "application/json"
