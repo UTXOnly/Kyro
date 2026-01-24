@@ -222,11 +222,11 @@ async with RestClient(KyroConfig()) as client:
 
 ### Example error output
 
-Real tracebacks from a run. `e.status`, `e.response_body`, `e.error_code`, `e.timeout`, and `e.details` are set so you can branch or log without re-calling the API.
+Real tracebacks from a run. `e.status`, `e.response_body`, `e.error_code`, `e.timeout`, and `e.details` are set so you can branch or log without re-calling the API. *(In a terminal or IDE the final exception line is usually highlighted in red; GitHub strips inline styles, so it appears plain here.)*
 
 **`KyroHTTPError`** (4xx/5xx from Kalshi):
 
-<pre style="background:#0d1117;color:#e6edf3;padding:14px 18px;border-radius:8px;font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;font-size:13px;line-height:1.6;overflow-x:auto;border:1px solid #30363d">
+```
 Traceback (most recent call last):
   File "app/main.py", line 12, in fetch_market
     m = await markets.get_market(client, "NONEXISTENT-TICKER")
@@ -234,12 +234,12 @@ Traceback (most recent call last):
     return await client.get(f"/markets/{ticker}")
   File "kyro/rest/client.py", line 134, in _request
     raise KyroHTTPError("Kalshi API error", status=status, response_body=parsed, error_code=err_code)
-<span style="color:#f85149">kyro.exceptions.KyroHTTPError: Kalshi API error: status=404, error_code='MarketNotFound', response_body="{'code': 'MarketNotFound', 'message': 'Market not found'}"</span>
-</pre>
+kyro.exceptions.KyroHTTPError: Kalshi API error: status=404, error_code='MarketNotFound', response_body="{'code': 'MarketNotFound', 'message': 'Market not found'}"
+```
 
 **`KyroTimeoutError`** (request exceeded `request_timeout`):
 
-<pre style="background:#0d1117;color:#e6edf3;padding:14px 18px;border-radius:8px;font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;font-size:13px;line-height:1.6;overflow-x:auto;border:1px solid #30363d">
+```
 Traceback (most recent call last):
   File "app/main.py", line 8, in main
     await markets.get_markets(client, limit=100)
@@ -247,14 +247,14 @@ Traceback (most recent call last):
     return await client.get("/markets", params=params or None)
   File "kyro/rest/client.py", line 119, in _request
     raise KyroTimeoutError(str(e) or "Request timed out", timeout=30.0) from e
-<span style="color:#f85149">kyro.exceptions.KyroTimeoutError: Request timed out</span>
-</pre>
+kyro.exceptions.KyroTimeoutError: Request timed out
+```
 
-<small>`e.timeout` is the limit that was exceeded (e.g. `30.0`).</small>
+*`e.timeout` is the limit that was exceeded (e.g. `30.0`).*
 
 **`KyroConnectionError`** (DNS, connection refused, etc.):
 
-<pre style="background:#0d1117;color:#e6edf3;padding:14px 18px;border-radius:8px;font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;font-size:13px;line-height:1.6;overflow-x:auto;border:1px solid #30363d">
+```
 Traceback (most recent call last):
   File "app/main.py", line 7, in main
     await exchange.get_exchange_status(client)
@@ -262,12 +262,12 @@ Traceback (most recent call last):
     return await client.get("/exchange/status")
   File "kyro/rest/client.py", line 130, in _request
     raise KyroConnectionError(str(e)) from e
-<span style="color:#f85149">kyro.exceptions.KyroConnectionError: Cannot connect to host demo-api.kalshi.co:443 ssl:True [Connection refused]</span>
-</pre>
+kyro.exceptions.KyroConnectionError: Cannot connect to host demo-api.kalshi.co:443 ssl:True [Connection refused]
+```
 
 **`KyroValidationError`** (Pydantic schema mismatch, invalid JSON, or bad request body):
 
-<pre style="background:#0d1117;color:#e6edf3;padding:14px 18px;border-radius:8px;font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;font-size:13px;line-height:1.6;overflow-x:auto;border:1px solid #30363d">
+```
 Traceback (most recent call last):
   File "app/main.py", line 9, in main
     m = await client.get("/markets/KXBTC", response_model=Market)
@@ -275,12 +275,12 @@ Traceback (most recent call last):
     return loads_model(raw, response_model)
   File "kyro/_serialization.py", line 110, in loads_model
     raise KyroValidationError(f"Validation failed for {model.__name__}: {e}", details=e.errors()) from e
-<span style="color:#f85149">kyro.exceptions.KyroValidationError: Validation failed for Market: 1 validation error for Market
+kyro.exceptions.KyroValidationError: Validation failed for Market: 1 validation error for Market
 ticker
-  Field required [type=missing, input_value={}, input_type=dict]</span>
-</pre>
+  Field required [type=missing, input_value={}, input_type=dict]
+```
 
-<small>`e.details` holds the Pydantic `errors()` list (e.g. `[{"type":"missing","loc":("ticker",),...}]`).</small>
+*`e.details` holds the Pydantic `errors()` list (e.g. `[{"type":"missing","loc":("ticker",),...}]`).*
 
 ---
 
