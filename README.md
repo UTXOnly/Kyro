@@ -461,6 +461,7 @@ See [benchmarks/README.md](benchmarks/README.md) for the mock server and options
 
 **Live API smoke** (every endpoint against the real Kalshi API): `python scripts/live_api_smoke.py` — see [TESTING.md](TESTING.md#live-api-smoke-test).
 
+
 If `pip install -e ".[dev]"` fails with **`externally-managed-environment`**, create and activate a venv first; do not use `--break-system-packages`.
 
 ---
