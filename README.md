@@ -1,10 +1,13 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/UTXOnly/kyro@more_testing/assets/logo.png" alt="Kyro" width="420">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/UTXOnly/kyro@main/assets/logo.png">
+    <img src="https://cdn.jsdelivr.net/gh/UTXOnly/kyro@main/assets/logo-light-bg.png" alt="Kyro" width="420">
+  </picture>
 </p>
 
 # Kyro
 
-[![Ruff](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml) [![Black](https://github.com/UTXOnly/kyro/actions/workflows/black.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/black.yml) [![Tests](https://github.com/UTXOnly/kyro/actions/workflows/test.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/test.yml) [![Benchmarks](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml)
+[![PyPI](https://img.shields.io/pypi/v/kyro.svg)](https://pypi.org/project/kyro/) [![Ruff](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/ruff.yml) [![Black](https://github.com/UTXOnly/kyro/actions/workflows/black.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/black.yml) [![Tests](https://github.com/UTXOnly/kyro/actions/workflows/test.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/test.yml) [![Benchmarks](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/UTXOnly/kyro/actions/workflows/benchmarks.yml)
 
 Kyro is an async Python client library for the Kalshi REST API.
 
@@ -31,7 +34,7 @@ Errors are surfaced as explicit exception types: `KyroError` (base), `KyroHTTPEr
 
 ## Install
 
-From PyPI (after a release):
+From [PyPI](https://pypi.org/project/kyro/):
 
 ```bash
 pip install kyro
