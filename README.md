@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/UTXOnly/kyro/main/assets/logo.png" alt="Kyro" width="280">
+</p>
+
 # Kyro
 
 **Async Kalshi API client** — aiohttp, orjson, Pydantic. Built for **apps** (library, not CLI).
@@ -110,6 +114,19 @@ Full request/response docs for **every method** (exchange, markets, events, orde
 
 ---
 
+## Examples
+
+The **[examples/](examples/)** directory has standalone scripts that use kyro. They are not part of the library.
+
+- **`fetch_orderbook_example.py`** — Fetches exchange status, open markets, and one market’s orderbook; parses the book (best bid/ask, mid, spread) and runs example business logic (e.g. tight spread, liquidity, skew). Uses the **demo API** by default (no keys); production may require auth.
+
+  ```bash
+  python examples/fetch_orderbook_example.py
+  KALSHI_PRODUCTION=1 python examples/fetch_orderbook_example.py   # production
+  ```
+
+---
+
 ## Low-level REST client
 
 For paths not covered by the modular API, use the generic client:
@@ -176,6 +193,9 @@ kyro/
 │           ├── events.py
 │           ├── orders.py
 │           └── portfolio.py
+├── examples/
+│   ├── README.md
+│   └── fetch_orderbook_example.py   # fetch markets + orderbook, parse, example logic
 ├── pyproject.toml
 ├── README.md
 ├── API_REFERENCE.md   # Request/response docs for every modular method
