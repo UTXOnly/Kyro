@@ -15,7 +15,7 @@ KALSHI_PRIVATE_KEY / KALSHI_PRIVATE_KEY_PATH.
 **Discovery:** searches up to 100 open markets for one where get_market and
 get_market_candlesticks both return 200; if none, falls back to get_market 200 only.
 
-Install: pip install -e ".[dev,auth]"
+Install: pip install -e ".[dev]"
 
   python scripts/live_api_smoke.py
 
@@ -676,7 +676,7 @@ async def main() -> None:
     if not cfg.auth_signer:
         print(
             "Auth required: put KALSHI_ACCESS_KEY and KALSHI_PRIVATE_KEY or KALSHI_PRIVATE_KEY_PATH in .env (see .env.example) or export them.\n"
-            'Install: pip install -e ".[dev,auth]"'
+            'Install: pip install -e ".[dev]"'
         )
         sys.exit(1)
 

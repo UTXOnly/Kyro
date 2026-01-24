@@ -1,7 +1,6 @@
 """Kalshi request signing and config-from-env helpers.
 
-Requires the cryptography package when using env-based auth:
-    pip install "kyro[auth]"   # or: pip install cryptography
+Uses the cryptography and python-dotenv packages (core dependencies).
 """
 
 from __future__ import annotations
@@ -24,7 +23,7 @@ def _load_private_key(pem_or_path: str | bytes) -> Any:
         from cryptography.hazmat.primitives.serialization import load_pem_private_key
     except ImportError as e:
         raise KyroError(
-            'Install cryptography for Kalshi request signing: pip install "kyro[auth]" or pip install cryptography'
+            "cryptography is required for Kalshi request signing; reinstall kyro"
         ) from e
 
     if isinstance(pem_or_path, bytes):
@@ -66,8 +65,7 @@ def config_from_env(*, default_demo: bool = False) -> KyroConfig:
     """Build :class:`KyroConfig` from environment variables.
 
     Loads a ``.env`` file from the current directory when ``python-dotenv`` is available
-    (included with ``pip install "kyro[auth]"``). You can put ``KALSHI_*`` there instead of
-    exporting.
+    (python-dotenv is a core dependency). You can put ``KALSHI_*`` there instead of exporting.
 
     **URL / environment:**
     - ``KALSHI_BASE_URL`` — override base URL (e.g. ``https://demo-api.kalshi.co/trade-api/v2``).
@@ -81,7 +79,7 @@ def config_from_env(*, default_demo: bool = False) -> KyroConfig:
     - ``KALSHI_PRIVATE_KEY_PATH`` — path to a ``.key`` or ``.pem`` file (used when ``KALSHI_PRIVATE_KEY`` is not set).
 
     When both key ID and private key are present, request signing is enabled and auth-required
-    endpoints will work. Requires the ``cryptography`` package: ``pip install "kyro[auth]"``.
+    endpoints will work. Uses the ``cryptography`` package (core dependency).
     """
     try:
         from dotenv import load_dotenv
