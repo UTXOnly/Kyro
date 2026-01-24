@@ -43,6 +43,17 @@ pip install -e ".[dev]" && pytest tests/ -v
 pytest tests/ -v --cov=kyro --cov-report=term-missing
 ```
 
+## Benchmarks
+
+**`benchmarks/`** — speed benchmarks for serialization (`dumps`, `loads`, `loads_model`) and RestClient round-trips against the **live Kalshi API** (uses `config_from_env`, network required). Install and run:
+
+```bash
+pip install -e ".[dev,bench]"
+pytest benchmarks/ -v --benchmark-only
+```
+
+Set `KALSHI_DEMO=1` (or `KALSHI_PRODUCTION=1`). For `get_balance` and `get_orders` benchmarks, also set `KALSHI_ACCESS_KEY` and `KALSHI_PRIVATE_KEY` or `KALSHI_PRIVATE_KEY_PATH`, and `pip install -e ".[dev,bench,auth]"`. See **[benchmarks/README.md](benchmarks/README.md)**.
+
 ## Live API smoke test
 
 A step above unit tests: **`scripts/live_api_smoke.py`** calls every kyro endpoint and method against the real Kalshi API. Use it to verify the client and API paths with live data.

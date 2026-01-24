@@ -4,18 +4,36 @@
 
 # Kyro
 
-Kyro is an async Python client for the [Kalshi API](https://docs.kalshi.com/api-reference/). Built on aiohttp, orjson, and Pydantic. Library only—no CLI.
+Kyro is an async Python client for the Kalshi REST API, built with an emphasis on
+typing, validation, and predictable behavior in async code.
 
-- REST client for Kalshi’s HTTP API
-- Helpers: `exchange`, `markets`, `events`, `orders`, `portfolio`
-- Exceptions: `KyroHTTPError`, `KyroTimeoutError`, `KyroConnectionError`, `KyroValidationError`
+The client uses aiohttp for non-blocking HTTP calls and Pydantic models to
+validate inputs and responses, so API interactions fail early and explicitly
+when something is wrong.
+
+Kyro is structured to mirror Kalshi’s API directly, with minimal abstraction.
+It’s intended to be a typed, programmatic interface — not a framework or a
+trading engine.
+
+API areas are grouped into:
+- `exchange`
+- `markets`
+- `events`
+- `orders`
+- `portfolio`
+
+Errors are surfaced as explicit exception types:
+- `KyroHTTPError`
+- `KyroTimeoutError`
+- `KyroConnectionError`
+- `KyroValidationError`
 
 ---
 
 ## Requirements
 
 - Python ≥ 3.10  
-- aiohttp, pydantic, orjson
+- aiohttp, pydantic
 
 ## Install
 

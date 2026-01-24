@@ -1,6 +1,6 @@
 """Async REST client for the Kalshi API.
 
-Uses aiohttp, orjson, and Pydantic. Built for app integration (library, not CLI).
+Uses aiohttp and Pydantic. Built for app integration (library, not CLI).
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ class RestClient:
 
     Use as an async context manager. Wraps :class:`KyroSession` and provides
     :meth:`get`, :meth:`post`, :meth:`put`, :meth:`patch`, :meth:`delete` with
-    orjson/Pydantic serialization and Kyro exception handling.
+    Pydantic-based JSON serialization and Kyro exception handling.
 
     Example:
         >>> from kyro import RestClient
@@ -93,6 +93,8 @@ class RestClient:
         if json is not None:
             try:
                 body = dumps(json)
+            except KyroValidationError:
+                raise
             except Exception as e:
                 raise KyroValidationError(f"Failed to serialize request body: {e}") from e
             extra_headers = {"Content-Type": "application/json"}

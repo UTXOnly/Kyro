@@ -28,6 +28,8 @@ dist/
 htmlcov/
 .tox/
 .nox/
+.benchmarks/
+benchmark_results.txt
 
 # mypy, ruff
 .mypy_cache/

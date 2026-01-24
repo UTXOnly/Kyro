@@ -30,6 +30,12 @@ def test_dumps_nested() -> None:
     assert dumps({"a": [1, {"b": 2}]}) == b'{"a":[1,{"b":2}]}'
 
 
+def test_dumps_nonserializable_raises() -> None:
+    with pytest.raises(KyroValidationError) as exc_info:
+        dumps({"x": object()})  # not JSON-serializable
+    assert "serialize" in str(exc_info.value).lower() or "Failed" in str(exc_info.value)
+
+
 def test_loads_bytes() -> None:
     assert loads(b'{"a":1}') == {"a": 1}
 
@@ -88,3 +94,9 @@ def test_loads_model_missing_required_raises() -> None:
         loads_model(b'{"count":1}', _Payload)
     assert "Validation failed" in str(exc_info.value)
     assert exc_info.value.details is not None
+
+
+def test_loads_model_invalid_json_raises() -> None:
+    with pytest.raises(KyroValidationError) as exc_info:
+        loads_model(b"not json", _Payload)
+    assert "Validation failed" in str(exc_info.value) or "Invalid" in str(exc_info.value)

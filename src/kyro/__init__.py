@@ -1,4 +1,4 @@
-"""Kyro — async Kalshi API client (aiohttp, orjson, Pydantic).
+"""Kyro — async Kalshi API client (aiohttp, Pydantic).
 
 Library for building apps. REST client today; WebSocket support later.
 """

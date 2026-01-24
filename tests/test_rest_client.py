@@ -112,7 +112,7 @@ async def test_invalid_json_body_raises_validation_error(
     kyro_client: RestClient,
 ) -> None:
     with pytest.raises(KyroValidationError) as exc_info:
-        await kyro_client.post("/echo", json={"x": {1, 2, 3}})  # set not JSON-serializable
+        await kyro_client.post("/echo", json={"x": object()})  # not JSON-serializable
     assert "serialize" in str(exc_info.value).lower() or "Failed" in str(exc_info.value)
 
 
