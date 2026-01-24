@@ -4,12 +4,11 @@
 
 # Kyro
 
-**Async Kalshi API client** — aiohttp, orjson, Pydantic. Built for **apps** (library, not CLI).
+Kyro is an async Python client for the [Kalshi API](https://docs.kalshi.com/api-reference/). Built on aiohttp, orjson, and Pydantic. Library only—no CLI.
 
-- **REST client** for Kalshi’s HTTP API.
-- **Modular API** — `exchange`, `markets`, `events`, `orders`, `portfolio` (typed helpers for [Kalshi’s API](https://docs.kalshi.com/api-reference/)).
-- **Error handling**: `KyroError`, `KyroHTTPError`, `KyroConnectionError`, `KyroTimeoutError`, `KyroValidationError`.
-- **Serialization**: orjson + Pydantic.
+- REST client for Kalshi’s HTTP API
+- Helpers: `exchange`, `markets`, `events`, `orders`, `portfolio`
+- Exceptions: `KyroHTTPError`, `KyroTimeoutError`, `KyroConnectionError`, `KyroValidationError`
 
 ---
 
@@ -229,7 +228,7 @@ If `pip install -e ".[dev]"` fails with **`externally-managed-environment`**, cr
 
 ## ⚠️ Disclaimer ⚠️
 
-The author accepts no responsibility for any use of this software. Kyro is provided as-is. When trading or interacting with live funds via the Kalshi API, always use caution and understand the risks. Prefer the demo environment for testing.
+The author accepts no responsibility for any use of this software. Kyro is provided as-is. You must adhere to all [Kalshi API rules and terms](https://docs.kalshi.com/). When trading or using live funds, use caution and understand the risks. Prefer the [demo environment](https://docs.kalshi.com/getting_started/demo_env) for testing.
 
 ---
 
