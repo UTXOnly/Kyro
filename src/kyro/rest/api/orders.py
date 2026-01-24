@@ -81,48 +81,30 @@ async def create_order(
     type: limit|market. time_in_force: fill_or_kill|good_till_canceled|immediate_or_cancel.
     yes_price/no_price 1–99 (cents). subaccount default 0.
     """
-    body: dict[str, Any] = {
+    body = _clean({
         "ticker": ticker,
         "side": side,
         "action": action,
+        "count": count,
+        "count_fp": count_fp,
+        "type": type,
+        "yes_price": yes_price,
+        "no_price": no_price,
+        "yes_price_dollars": yes_price_dollars,
+        "no_price_dollars": no_price_dollars,
+        "client_order_id": client_order_id,
+        "expiration_ts": expiration_ts,
+        "time_in_force": time_in_force,
+        "buy_max_cost": buy_max_cost,
+        "post_only": post_only,
+        "reduce_only": reduce_only,
+        "sell_position_floor": sell_position_floor,
+        "self_trade_prevention_type": self_trade_prevention_type,
+        "order_group_id": order_group_id,
+        "cancel_order_on_pause": cancel_order_on_pause,
+        "subaccount": subaccount,
         **extra,
-    }
-    if count is not None:
-        body["count"] = count
-    if count_fp is not None:
-        body["count_fp"] = count_fp
-    if type is not None:
-        body["type"] = type
-    if yes_price is not None:
-        body["yes_price"] = yes_price
-    if no_price is not None:
-        body["no_price"] = no_price
-    if yes_price_dollars is not None:
-        body["yes_price_dollars"] = yes_price_dollars
-    if no_price_dollars is not None:
-        body["no_price_dollars"] = no_price_dollars
-    if client_order_id is not None:
-        body["client_order_id"] = client_order_id
-    if expiration_ts is not None:
-        body["expiration_ts"] = expiration_ts
-    if time_in_force is not None:
-        body["time_in_force"] = time_in_force
-    if buy_max_cost is not None:
-        body["buy_max_cost"] = buy_max_cost
-    if post_only is not None:
-        body["post_only"] = post_only
-    if reduce_only is not None:
-        body["reduce_only"] = reduce_only
-    if sell_position_floor is not None:
-        body["sell_position_floor"] = sell_position_floor
-    if self_trade_prevention_type is not None:
-        body["self_trade_prevention_type"] = self_trade_prevention_type
-    if order_group_id is not None:
-        body["order_group_id"] = order_group_id
-    if cancel_order_on_pause is not None:
-        body["cancel_order_on_pause"] = cancel_order_on_pause
-    if subaccount is not None:
-        body["subaccount"] = subaccount
+    })
     return await client.post("/portfolio/orders", json=body)
 
 
@@ -145,21 +127,16 @@ async def amend_order(
     **extra: Any,
 ) -> Any:
     """Amend an order. `POST /portfolio/orders/{order_id}/amend`."""
-    body: dict[str, Any] = dict(extra)
-    if yes_price is not None:
-        body["yes_price"] = yes_price
-    if no_price is not None:
-        body["no_price"] = no_price
-    if yes_price_dollars is not None:
-        body["yes_price_dollars"] = yes_price_dollars
-    if no_price_dollars is not None:
-        body["no_price_dollars"] = no_price_dollars
-    if count is not None:
-        body["count"] = count
-    if count_fp is not None:
-        body["count_fp"] = count_fp
-    if expiration_ts is not None:
-        body["expiration_ts"] = expiration_ts
+    body = _clean({
+        "yes_price": yes_price,
+        "no_price": no_price,
+        "yes_price_dollars": yes_price_dollars,
+        "no_price_dollars": no_price_dollars,
+        "count": count,
+        "count_fp": count_fp,
+        "expiration_ts": expiration_ts,
+        **extra,
+    })
     return await client.post(f"/portfolio/orders/{order_id}/amend", json=body)
 
 
@@ -172,11 +149,11 @@ async def decrease_order(
     **extra: Any,
 ) -> Any:
     """Decrease an order size. `POST /portfolio/orders/{order_id}/decrease`."""
-    body: dict[str, Any] = dict(extra)
-    if count is not None:
-        body["count"] = count
-    if count_fp is not None:
-        body["count_fp"] = count_fp
+    body = _clean({
+        "count": count,
+        "count_fp": count_fp,
+        **extra,
+    })
     return await client.post(f"/portfolio/orders/{order_id}/decrease", json=body)
 
 
@@ -199,9 +176,9 @@ async def batch_cancel_orders(
 
     Provide order_ids (list) or ticker to cancel by market.
     """
-    body: dict[str, Any] = dict(extra)
-    if order_ids is not None:
-        body["order_ids"] = order_ids
-    if ticker is not None:
-        body["ticker"] = ticker
-    return await client.delete("/portfolio/orders/batch", json=body if body else None)
+    body = _clean({
+        "order_ids": order_ids,
+        "ticker": ticker,
+        **extra,
+    })
+    return await client.delete("/portfolio/orders/batch", json=body or None)

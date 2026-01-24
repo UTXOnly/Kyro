@@ -1,7 +1,7 @@
 """
 Example: fetch an event, a market, and an orderbook from Kalshi, then print.
 
-Run from the repo root (with kyro installed, e.g. `pip install -e .`):
+Run from the repo root with kyro installed (venv activated, pip install -e . or .[dev]):
 
     python examples/fetch_orderbook_example.py
 
@@ -11,6 +11,9 @@ Uses the Kalshi **demo** API by default. For production:
 
 Public endpoints (events, markets, orderbook) do not require auth. If you
 see 401, add API keys via KyroConfig(auth_headers={...}).
+
+If you get ModuleNotFoundError: No module named 'kyro', install from repo root:
+    pip install -e .   # or  pip install -e ".[dev]"
 """
 
 from __future__ import annotations

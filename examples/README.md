@@ -6,7 +6,7 @@ Standalone scripts that use the **kyro** client. The logic in these scripts (par
 
 Fetches live Kalshi data: exchange status, a list of open markets, and one market’s orderbook. It parses the orderbook (best bid/ask, mid, spread, top-of-book size) and runs example “business logic” (e.g. tight spread, liquidity, skew).
 
-**Run (from repo root, with kyro installed):**
+**Run from repo root** (venv activated, kyro installed):
 
 ```bash
 pip install -e .   # or: pip install -e ".[dev]"

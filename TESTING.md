@@ -1,5 +1,7 @@
 # Testing Kyro
 
+**Run all commands from the repository root** with the venv activated.
+
 ## Setup (install only)
 
 Use a **virtual environment** (required on Homebrew Python and other [PEP 668](https://peps.python.org/pep-0668/)–managed systems):
@@ -10,7 +12,7 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-`pip install -e ".[dev]"` **only installs** the package and dev deps; it does **not** run tests.
+`pip install -e ".[dev]"` **only installs** the package and dev deps (including pytest); it does **not** run tests. Use the project venv and this install—do **not** rely on `pipx install pytest` or system pytest.
 
 If you see **`error: externally-managed-environment`** when running `pip install`, you need to create and activate a venv first (as above); do not use `--break-system-packages`.
 
@@ -23,7 +25,7 @@ uv pip install -e ".[dev]"
 
 ## Run tests
 
-After setup (or with an already-activated venv that has `.[dev]` installed):
+From **repo root**, with venv activated and `.[dev]` installed:
 
 ```bash
 pytest tests/ -v
@@ -47,6 +49,14 @@ pytest tests/ -v --cov=kyro --cov-report=term-missing
 - **Run a specific file:** `pytest tests/test_rest_client.py -v`
 - **Run a specific test:** `pytest tests/test_rest_client.py::test_get_200_json -v`
 - **Verbose logs:** `pytest tests/ -v -s` (show print/log output)
+
+## Troubleshooting
+
+- **`ModuleNotFoundError: No module named 'kyro'`** — Install kyro in your active venv: `pip install -e .` or `pip install -e ".[dev]"`. Run examples from **repo root**: `python examples/fetch_orderbook_example.py` (not from `examples/` unless kyro is on `PYTHONPATH`).
+
+- **`pytest: command not found`** — Use the project venv and `pip install -e ".[dev]"`; pytest is a dev dependency. Run `pytest tests/ -v` from **repo root** (the `tests/` directory is at the root, not inside `examples/`).
+
+- **`error: externally-managed-environment`** — Create and activate a venv first; do not use `--break-system-packages`.
 
 ## What's tested
 

@@ -117,7 +117,9 @@ Full request/response docs for **every method** (exchange, markets, events, orde
 
 The **[examples/](examples/)** directory has standalone scripts that use kyro. They are not part of the library.
 
-- **`fetch_orderbook_example.py`** — Fetches exchange status, open markets, and one market’s orderbook; parses the book (best bid/ask, mid, spread) and runs example business logic (e.g. tight spread, liquidity, skew). Uses the **demo API** by default (no keys); production may require auth.
+From **repo root** with kyro installed (venv activated, `pip install -e .` or `.[dev]`):
+
+- **`fetch_orderbook_example.py`** — Fetches an event, a market, and an orderbook; parses the book (best bid/ask, mid, spread). Uses the **demo API** by default (no keys); production may require auth.
 
   ```bash
   python examples/fetch_orderbook_example.py
