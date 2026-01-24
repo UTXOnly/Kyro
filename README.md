@@ -226,7 +226,7 @@ Real tracebacks from a run. Each exception carries the relevant attributes (`e.s
 
 **`KyroHTTPError`** (4xx/5xx from Kalshi):
 
-```
+```python
 Traceback (most recent call last):
   File "app/main.py", line 12, in fetch_market
     m = await markets.get_market(client, "NONEXISTENT-TICKER")
@@ -239,7 +239,7 @@ kyro.exceptions.KyroHTTPError: Kalshi API error: status=404, error_code='MarketN
 
 **`KyroTimeoutError`** (request exceeded `request_timeout`):
 
-```
+```python
 Traceback (most recent call last):
   File "app/main.py", line 8, in main
     await markets.get_markets(client, limit=100)
@@ -254,7 +254,7 @@ kyro.exceptions.KyroTimeoutError: Request timed out
 
 **`KyroConnectionError`** (DNS, connection refused, etc.):
 
-```
+```python
 Traceback (most recent call last):
   File "app/main.py", line 7, in main
     await exchange.get_exchange_status(client)
