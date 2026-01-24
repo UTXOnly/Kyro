@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <!-- B3 symbol -->
+  <g fill="white">
+    <!-- Outer circle of B -->
+    <path d="M 120 100 m -35 0 a 35 35 0 1 1 0 0.1" stroke="white" stroke-width="8" fill="none"/>
+    <!-- Inner loops forming B3 -->
+    <path d="M 120 70 Q 135 70 135 85 Q 135 100 120 100 Q 135 100 135 115 Q 135 130 120 130" stroke="white" stroke-width="8" fill="none"/>
+    <!-- Vertical line of B -->
+    <path d="M 120 70 L 120 130" stroke="white" stroke-width="8" fill="none"/>
+    <!-- Bottom curve connecting to 3 -->
+    <path d="M 120 100 Q 140 100 145 85" stroke="white" stroke-width="8" fill="none"/>
+  </g>
+  
+  <!-- KYRO text -->
+  <text x="200" y="130" font-family="Arial, sans-serif" font-size="90" font-weight="300" fill="white" letter-spacing="5">KYRO</text>
+</svg>

@@ -5,6 +5,7 @@ Ref: https://docs.kalshi.com/api-reference/market/get-markets
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -109,24 +110,33 @@ async def get_market_candlesticks(
     client: RestClient,
     ticker: str,
     *,
+    series_ticker: str,
     start_ts: int | None = None,
     end_ts: int | None = None,
     period_interval: int | None = None,
     limit: int | None = None,
+    include_latest_before_start: bool | None = None,
 ) -> Any:
-    """Get OHLCV candlesticks for a market. `GET /markets/{ticker}/candlesticks`.
+    """Get OHLCV candlesticks. `GET /series/{series_ticker}/markets/{ticker}/candlesticks`.
 
-    Query: start_ts, end_ts (Unix), period_interval (seconds), limit.
+    Kalshi requires series_ticker. start_ts, end_ts (Unix), period_interval (1|60|1440 min).
+    If start_ts/end_ts omitted, uses last 24h. limit 1–1000.
     """
+    now = int(time.time())
+    if start_ts is None:
+        start_ts = now - 86400
+    if end_ts is None:
+        end_ts = now
     params = _clean(
         {
             "start_ts": start_ts,
             "end_ts": end_ts,
             "period_interval": period_interval,
             "limit": limit,
+            "include_latest_before_start": include_latest_before_start,
         }
     )
-    return await client.get(f"/markets/{ticker}/candlesticks", params=params or None)
+    return await client.get(f"/series/{series_ticker}/markets/{ticker}/candlesticks", params=params or None)
 
 
 async def get_series(

@@ -65,6 +65,10 @@ def _create_signer(
 def config_from_env(*, default_demo: bool = False) -> KyroConfig:
     """Build :class:`KyroConfig` from environment variables.
 
+    Loads a ``.env`` file from the current directory when ``python-dotenv`` is available
+    (included with ``pip install "kyro[auth]"``). You can put ``KALSHI_*`` there instead of
+    exporting.
+
     **URL / environment:**
     - ``KALSHI_BASE_URL`` — override base URL (e.g. ``https://demo-api.kalshi.co/trade-api/v2``).
     - ``KALSHI_DEMO=1`` — use demo base URL when ``KALSHI_BASE_URL`` is not set.
@@ -79,6 +83,11 @@ def config_from_env(*, default_demo: bool = False) -> KyroConfig:
     When both key ID and private key are present, request signing is enabled and auth-required
     endpoints will work. Requires the ``cryptography`` package: ``pip install "kyro[auth]"``.
     """
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
 
     from kyro._config import KyroConfig
 

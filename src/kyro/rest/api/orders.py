@@ -113,7 +113,11 @@ async def create_order(
 
 
 async def cancel_order(client: RestClient, order_id: str) -> Any:
-    """Cancel an order. `DELETE /portfolio/orders/{order_id}`."""
+    """Cancel an order. `DELETE /portfolio/orders/{order_id}`.
+
+    Response (200): ``{order, reduced_by, reduced_by_fp}`` per
+    https://docs.kalshi.com/api-reference/orders/cancel-order
+    """
     return await client.delete(f"/portfolio/orders/{order_id}")
 
 
@@ -121,24 +125,38 @@ async def amend_order(
     client: RestClient,
     order_id: str,
     *,
+    ticker: str,
+    side: str,
+    action: str,
     yes_price: int | None = None,
     no_price: int | None = None,
     yes_price_dollars: str | None = None,
     no_price_dollars: str | None = None,
     count: int | None = None,
     count_fp: str | None = None,
+    client_order_id: str | None = None,
+    updated_client_order_id: str | None = None,
     expiration_ts: int | None = None,
     **extra: Any,
 ) -> Any:
-    """Amend an order. `POST /portfolio/orders/{order_id}/amend`."""
+    """Amend an order. `POST /portfolio/orders/{order_id}/amend`.
+
+    Kalshi requires ticker, side (yes|no), action (buy|sell) plus any of:
+    yes_price, no_price, yes_price_dollars, no_price_dollars, count, count_fp, etc.
+    """
     body = _clean(
         {
+            "ticker": ticker,
+            "side": side,
+            "action": action,
             "yes_price": yes_price,
             "no_price": no_price,
             "yes_price_dollars": yes_price_dollars,
             "no_price_dollars": no_price_dollars,
             "count": count,
             "count_fp": count_fp,
+            "client_order_id": client_order_id,
+            "updated_client_order_id": updated_client_order_id,
             "expiration_ts": expiration_ts,
             **extra,
         }
@@ -150,15 +168,23 @@ async def decrease_order(
     client: RestClient,
     order_id: str,
     *,
-    count: int | None = None,
-    count_fp: str | None = None,
+    reduce_by: int | None = None,
+    reduce_by_fp: str | None = None,
+    reduce_to: int | None = None,
+    reduce_to_fp: str | None = None,
     **extra: Any,
 ) -> Any:
-    """Decrease an order size. `POST /portfolio/orders/{order_id}/decrease`."""
+    """Decrease an order size. `POST /portfolio/orders/{order_id}/decrease`.
+
+    Provide exactly one of: (reduce_by or reduce_by_fp) or (reduce_to or reduce_to_fp).
+    reduce_by: contracts to reduce by; reduce_to: contracts to reduce to.
+    """
     body = _clean(
         {
-            "count": count,
-            "count_fp": count_fp,
+            "reduce_by": reduce_by,
+            "reduce_by_fp": reduce_by_fp,
+            "reduce_to": reduce_to,
+            "reduce_to_fp": reduce_to_fp,
             **extra,
         }
     )
@@ -166,29 +192,22 @@ async def decrease_order(
 
 
 async def batch_create_orders(client: RestClient, orders: list[dict[str, Any]]) -> Any:
-    """Batch create orders. `POST /portfolio/orders/batch`.
+    """Batch create orders. `POST /portfolio/orders/batched`.
 
     orders: list of order payloads (same shape as create_order body).
     """
-    return await client.post("/portfolio/orders/batch", json={"orders": orders})
+    return await client.post("/portfolio/orders/batched", json={"orders": orders})
 
 
 async def batch_cancel_orders(
     client: RestClient,
     *,
     order_ids: list[str] | None = None,
-    ticker: str | None = None,
-    **extra: Any,
+    ids: list[str] | None = None,
 ) -> Any:
-    """Batch cancel orders. `DELETE /portfolio/orders/batch`.
+    """Batch cancel orders. `DELETE /portfolio/orders/batched`.
 
-    Provide order_ids (list) or ticker to cancel by market.
+    Body: {\"ids\": [...]}. Pass order_ids or ids (ids preferred for Kalshi).
     """
-    body = _clean(
-        {
-            "order_ids": order_ids,
-            "ticker": ticker,
-            **extra,
-        }
-    )
-    return await client.delete("/portfolio/orders/batch", json=body or None)
+    the_ids = ids if ids is not None else order_ids or []
+    return await client.delete("/portfolio/orders/batched", json={"ids": the_ids})

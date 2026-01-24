@@ -103,8 +103,11 @@ async def get_settlements(
 
 
 async def get_total_resting_order_value(client: RestClient) -> Any:
-    """Get total value of resting orders. `GET /portfolio/resting-order-value`."""
-    return await client.get("/portfolio/resting-order-value")
+    """Get total value of resting orders (cents). FCM-oriented.
+
+    `GET /portfolio/summary/total_resting_order_value`
+    """
+    return await client.get("/portfolio/summary/total_resting_order_value")
 
 
 async def create_subaccount(client: RestClient, *, nickname: str | None = None) -> Any:

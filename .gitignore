@@ -47,6 +47,7 @@ benchmark_results.txt
 Thumbs.db
 
 # Local / secrets (do not commit)
+.env
 *.local
 .env.local
 .env.*.local
@@ -54,3 +55,6 @@ Thumbs.db
 .kalshi/
 kal_key.pem
 scratchpad
+
+# Live smoke audit (responses for manual review)
+live_smoke_audit.log

@@ -36,6 +36,7 @@ dev = [
 ]
 auth = [
     "cryptography>=41.0",
+    "python-dotenv>=1.0.0",
 ]
 bench = [
     "pytest-benchmark>=4.0",
