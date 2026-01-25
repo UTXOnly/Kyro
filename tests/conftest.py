@@ -100,24 +100,71 @@ async def _portfolio_order_delete(r: web.Request) -> web.Response:
     )
 
 
+async def _portfolio_order_decrease(r: web.Request) -> web.Response:
+    return _mk_json(
+        {
+            "order": {"order_id": r.match_info["order_id"]},
+            "reduced_by": 1,
+            "reduced_by_fp": "1.00",
+        }
+    )
+
+
+async def _event_candlesticks(r: web.Request) -> web.Response:
+    return _mk_json({"candlesticks": []})
+
+
+async def _search_filters_by_sport(_: web.Request) -> web.Response:
+    return _mk_json({"sports": []})
+
+
+async def _search_tags_by_categories(_: web.Request) -> web.Response:
+    return _mk_json({"categories": []})
+
+
+async def _portfolio_summary(_: web.Request) -> web.Response:
+    return _mk_json({"portfolio_value": 10000, "balance": 10000})
+
+
+async def _live_data(r: web.Request) -> web.Response:
+    if "tickers" in r.query:
+        return _mk_json({"tickers": r.query.get("tickers", "").split(",")})
+    return _mk_json({"ticker": r.query.get("ticker", "")})
+
+
+async def _exchange_user_data_timestamp(_: web.Request) -> web.Response:
+    return _mk_json({"timestamp": 1704067200})
+
+
 def create_kalshi_app() -> web.Application:
     """Minimal aiohttp app that mimics Kalshi-style routes for testing."""
     app = web.Application()
     # Exchange
     app.router.add_get("/exchange/status", _exchange_status)
+    app.router.add_get("/exchange/user-data-timestamp", _exchange_user_data_timestamp)
     # Markets
     app.router.add_get("/markets", _markets_list)
     app.router.add_get(r"/markets/{ticker}", _market_detail)
     app.router.add_get(r"/markets/{ticker}/orderbook", _market_orderbook)
     app.router.add_get("/markets/trades", _markets_trades)
+    app.router.add_get("/live-data", _live_data)
     # Events
     app.router.add_get("/events", _events_list)
     app.router.add_get(r"/events/{ticker}", _event_detail)
+    app.router.add_get(
+        r"/series/{series_ticker}/events/{event_ticker}/candlesticks",
+        _event_candlesticks,
+    )
+    # Search
+    app.router.add_get("/search/filters_by_sport", _search_filters_by_sport)
+    app.router.add_get("/search/tags_by_categories", _search_tags_by_categories)
     # Portfolio (auth-style; we don't enforce auth in tests)
+    app.router.add_get("/portfolio", _portfolio_summary)
     app.router.add_get("/portfolio/balance", _portfolio_balance)
     app.router.add_get("/portfolio/orders", _portfolio_orders_list)
     app.router.add_get(r"/portfolio/orders/{order_id}", _portfolio_order_detail)
     app.router.add_post("/portfolio/orders", _portfolio_order_create)
+    app.router.add_post(r"/portfolio/orders/{order_id}/decrease", _portfolio_order_decrease)
     app.router.add_delete(r"/portfolio/orders/{order_id}", _portfolio_order_delete)
     # Test helpers: empty, errors, echo, params, slow
     app.router.add_get("/empty", _empty)
