@@ -42,7 +42,7 @@ from typing import Any
 
 from kyro import RestClient, config_from_env
 from kyro.exceptions import KyroConnectionError, KyroHTTPError, KyroTimeoutError
-from kyro.rest import events, exchange, markets, orders, portfolio
+from kyro.rest import events, exchange, markets, orders, portfolio, search
 
 AUDIT_LOG_ENV = "KALSHI_SMOKE_AUDIT_LOG"
 DEFAULT_AUDIT_LOG = "live_smoke_audit.log"
@@ -71,6 +71,11 @@ PATH_HINTS: dict[tuple[str, str], str] = {
     ("orders", "batch_create_orders"): "POST /portfolio/orders/batched",
     ("orders", "batch_cancel_orders"): 'DELETE /portfolio/orders/batched body {"ids":[...]}',
     ("orders", "cancel_order"): "DELETE /portfolio/orders/{order_id}",
+    (
+        "events",
+        "get_event_candlesticks",
+    ): "GET /series/{series_ticker}/events/{event_ticker}/candlesticks?start_ts=&end_ts=&period_interval=1|60|1440",
+    ("portfolio", "get_portfolio"): "GET /portfolio (may 404 for some accounts)",
 }
 
 
@@ -230,7 +235,10 @@ async def _get_events(client: RestClient, ctx: dict) -> Any:
     r = await events.get_events(client, limit=5)
     evs = (r or {}).get("events") or []
     if evs:
-        ctx["event_ticker"] = evs[0].get("event_ticker")
+        e = evs[0]
+        ctx["event_ticker"] = e.get("event_ticker")
+        if e.get("series_ticker") and not ctx.get("series_ticker"):
+            ctx["series_ticker"] = e["series_ticker"]
     return r
 
 
@@ -339,6 +347,8 @@ READ_ONLY: list[tuple[str, str, Any, Any]] = [
     ("exchange", "get_exchange_schedule", lambda c, x: exchange.get_exchange_schedule(c), {}),
     ("exchange", "get_series_fee_changes", lambda c, x: exchange.get_series_fee_changes(c), {}),
     ("exchange", "get_user_data_timestamp", lambda c, x: exchange.get_user_data_timestamp(c), {}),
+    ("search", "get_sports_filters", lambda c, x: search.get_sports_filters(c), {}),
+    ("search", "get_tags_by_categories", lambda c, x: search.get_tags_by_categories(c), {}),
     ("events", "get_events", _get_events, {"limit": 5}),
     (
         "events",
@@ -351,6 +361,19 @@ READ_ONLY: list[tuple[str, str, Any, Any]] = [
         "get_event_metadata",
         lambda c, x: events.get_event_metadata(c, _event_ticker(x)),
         lambda ctx: {"event_ticker": _event_ticker(ctx)},
+    ),
+    (
+        "events",
+        "get_event_candlesticks",
+        lambda c, x: events.get_event_candlesticks(
+            c, _series_ticker(x), _event_ticker(x), limit=5, period_interval=60
+        ),
+        lambda ctx: {
+            "series_ticker": _series_ticker(ctx),
+            "event_ticker": _event_ticker(ctx),
+            "limit": 5,
+            "period_interval": 60,
+        },
     ),
     (
         "events",
@@ -405,6 +428,7 @@ READ_ONLY: list[tuple[str, str, Any, Any]] = [
         lambda ctx: {"tickers": _ticker(ctx)},
     ),
     ("orders", "get_orders", lambda c, x: orders.get_orders(c, limit=5), {"limit": 5}),
+    ("portfolio", "get_portfolio", lambda c, x: portfolio.get_portfolio(c), {}),
     ("portfolio", "get_balance", lambda c, x: portfolio.get_balance(c), {}),
     ("portfolio", "get_positions", lambda c, x: portfolio.get_positions(c, limit=5), {"limit": 5}),
     ("portfolio", "get_fills", lambda c, x: portfolio.get_fills(c, limit=5), {"limit": 5}),
