@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
 from kyro import RestClient
+from kyro.exceptions import KyroValidationError
 from kyro.rest.api import events, exchange, markets, orders, portfolio, search
 
 
@@ -14,8 +17,8 @@ async def test_get_exchange_status(kyro_client: RestClient) -> None:
 
 async def test_get_user_data_timestamp(kyro_client: RestClient) -> None:
     data = await exchange.get_user_data_timestamp(kyro_client)
-    assert "timestamp" in data
-    assert isinstance(data["timestamp"], int)
+    assert "as_of_time" in data
+    assert isinstance(data["as_of_time"], str)
 
 
 async def test_get_markets(kyro_client: RestClient) -> None:
@@ -84,13 +87,14 @@ async def test_get_event_candlesticks(kyro_client: RestClient) -> None:
 
 async def test_get_sports_filters(kyro_client: RestClient) -> None:
     data = await search.get_sports_filters(kyro_client)
-    assert "sports" in data
-    assert isinstance(data["sports"], list)
+    assert "filters_by_sports" in data
+    assert "sport_ordering" in data
+    assert isinstance(data["sport_ordering"], list)
 
 
 async def test_get_tags_by_categories(kyro_client: RestClient) -> None:
     data = await search.get_tags_by_categories(kyro_client)
-    assert "categories" in data
+    assert "tags_by_categories" in data
 
 
 async def test_get_orders(kyro_client: RestClient) -> None:
@@ -142,3 +146,58 @@ async def test_get_balance(kyro_client: RestClient) -> None:
     assert "balance" in data
     assert "portfolio_value" in data
     assert "updated_ts" in data
+
+
+async def test_create_order_invalid_side_raises(kyro_client: RestClient) -> None:
+    with pytest.raises(KyroValidationError):
+        await orders.create_order(
+            kyro_client, ticker="KXBTC", side="invalid", action="buy", count=1
+        )
+
+
+async def test_decrease_order_both_groups_raises(kyro_client: RestClient) -> None:
+    with pytest.raises(KyroValidationError):
+        await orders.decrease_order(
+            kyro_client, "ord-123", reduce_by=1, reduce_to=0
+        )
+
+
+async def test_decrease_order_neither_group_raises(kyro_client: RestClient) -> None:
+    with pytest.raises(KyroValidationError):
+        await orders.decrease_order(kyro_client, "ord-123")
+
+
+async def test_transfer_invalid_subaccount_raises(kyro_client: RestClient) -> None:
+    with pytest.raises(KyroValidationError):
+        await portfolio.transfer_between_subaccounts(
+            kyro_client,
+            client_transfer_id="test-1",
+            from_subaccount=33,
+            to_subaccount=0,
+            amount_cents=1,
+        )
+
+
+async def test_batch_create_orders(kyro_client: RestClient) -> None:
+    data = await orders.batch_create_orders(
+        kyro_client,
+        [
+            {"ticker": "KXBTC", "side": "yes", "action": "buy", "count": 1, "yes_price": 50},
+            {"ticker": "KXBTC", "side": "no", "action": "buy", "count": 1, "no_price": 55},
+        ],
+    )
+    assert "orders" in data
+    assert len(data["orders"]) == 2
+    assert data["orders"][0].get("order", {}).get("order_id") == "b-1"
+
+
+async def test_batch_create_orders_invalid_at_index_raises(kyro_client: RestClient) -> None:
+    with pytest.raises(KyroValidationError) as exc_info:
+        await orders.batch_create_orders(
+            kyro_client,
+            [
+                {"ticker": "KXBTC", "side": "yes", "action": "buy", "count": 1},
+                {"ticker": "KXBTC", "side": "maybe", "action": "buy", "count": 1},
+            ],
+        )
+    assert "index 1" in str(exc_info.value)

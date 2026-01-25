@@ -31,8 +31,10 @@ class KyroHTTPError(KyroError):
 
     Attributes:
         status: HTTP status code (e.g. 400, 401, 404, 500).
-        response_body: Raw response body, if available (bytes or decoded str).
-        error_code: Optional API-level error code from Kalshi response.
+        response_body: Parsed response (dict) or raw bytes/str.
+        error_code: API error code from Kalshi (e.g. ``code``, ``error_code``).
+        error_message: Human-readable message from Kalshi when present.
+        error_details: Additional details from Kalshi when present.
     """
 
     def __init__(
@@ -42,12 +44,16 @@ class KyroHTTPError(KyroError):
         status: int,
         response_body: bytes | str | dict | None = None,
         error_code: str | None = None,
+        error_message: str | None = None,
+        error_details: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, **kwargs)
         self.status = status
         self.response_body = response_body
         self.error_code = error_code
+        self.error_message = error_message
+        self.error_details = error_details
 
     def __str__(self) -> str:
         # Include status, error_code, and response_body so the traceback line

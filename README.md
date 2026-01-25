@@ -338,7 +338,7 @@ async with RestClient(KyroConfig()) as client:
     try:
         await markets.get_market(client, "NONEXISTENT-TICKER")
     except KyroHTTPError as e:
-        # e.status, e.response_body, e.error_code — all set from the Kalshi response
+        # e.status, e.response_body, e.error_code, e.error_message, e.error_details
         if e.status == 404:
             print("Not found:", e.error_code)
         elif e.status in (401, 403):
@@ -355,7 +355,7 @@ async with RestClient(KyroConfig()) as client:
 
 ### Example error output
 
-Real tracebacks from a run. Each exception carries the relevant attributes (`e.status`, `e.response_body`, `e.error_code`, `e.timeout`, `e.details`)—branch or log right away, no parsing.
+Real tracebacks from a run. Each exception carries the relevant attributes (`e.status`, `e.response_body`, `e.error_code`, `e.error_message`, `e.error_details`, `e.timeout`, `e.details`)—branch or log right away, no parsing.
 
 **`KyroHTTPError`** (4xx/5xx from Kalshi):
 

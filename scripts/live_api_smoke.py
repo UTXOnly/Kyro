@@ -51,7 +51,7 @@ DEBUG = os.environ.get("KALSHI_SMOKE_DEBUG", "").lower() in ("1", "true", "yes")
 # Path hints for failed calls. Shown when KALSHI_SMOKE_DEBUG=1.
 PATH_HINTS: dict[tuple[str, str], str] = {
     ("exchange", "get_series_fee_changes"): "GET /series/fee_changes",
-    ("exchange", "get_user_data_timestamp"): "GET /exchange/user-data-timestamp",
+    ("exchange", "get_user_data_timestamp"): "GET /exchange/user_data_timestamp",
     (
         "markets",
         "get_market_candlesticks",
@@ -666,8 +666,7 @@ async def _batch_create(client: RestClient, ctx: dict) -> Any:
 
 
 async def _create_subaccount(client: RestClient, ctx: dict) -> Any:
-    nick = f"smoke-{int(time.time())}"
-    r = await portfolio.create_subaccount(client, nickname=nick)
+    r = await portfolio.create_subaccount(client)
     ctx["created_subaccount_id"] = (r or {}).get("subaccount_number")
     return r
 
@@ -677,7 +676,11 @@ async def _transfer_between_subaccounts(client: RestClient, ctx: dict) -> Any:
     if to_id is None:
         raise ValueError("skipped; subaccounts not enabled")
     return await portfolio.transfer_between_subaccounts(
-        client, from_subaccount=0, to_subaccount=int(to_id), amount=1
+        client,
+        client_transfer_id=f"smoke-{int(time.time())}",
+        from_subaccount=0,
+        to_subaccount=int(to_id),
+        amount_cents=1,
     )
 
 

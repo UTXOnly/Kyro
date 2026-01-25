@@ -1,11 +1,12 @@
 # Kyro API Reference
 
-Request/response documentation for every modular method: **exchange**, **markets**, **events**, **orders**, **portfolio**, **search**.
+Request/response documentation for every modular method: **exchange**, **markets**, **events**, **orders**, **portfolio**, **search**. Aligned with the Kalshi OpenAPI spec.
 
 - **Import:** `from kyro.rest import exchange, markets, events, orders, portfolio, search`
 - **Client:** Pass `RestClient` as the first argument: `await exchange.get_exchange_status(client)`
 - **Base path:** `{KyroConfig.base_url}` (e.g. `https://api.elections.kalshi.com/trade-api/v2`)
 - **Auth:** Endpoints marked *Auth required* need `KyroConfig(auth_headers={...})` with KALSHI-ACCESS-KEY, TIMESTAMP, SIGNATURE.
+- **Type safety:** Request bodies for `create_order`, `amend_order`, `decrease_order`, `batch_create_orders`, and `transfer_between_subaccounts` are validated before sending. Invalid values (e.g. `side` not in `yes`/`no`, `yes_price` outside 1–99, or `decrease_order` with both `reduce_by` and `reduce_to`) raise `KyroValidationError`. Enums and models: `from kyro.models import Side, Action, OrderType, TimeInForce, CreateOrderRequest, ...`
 
 ---
 
@@ -83,7 +84,7 @@ data = await exchange.get_series_fee_changes(client)
 
 ### `get_user_data_timestamp`
 
-**HTTP:** `GET /exchange/user-data-timestamp`  
+**HTTP:** `GET /exchange/user_data_timestamp`  
 **Auth:** Yes
 
 **Usage:**
@@ -91,7 +92,7 @@ data = await exchange.get_series_fee_changes(client)
 data = await exchange.get_user_data_timestamp(client)
 ```
 
-**Response (200):** `{ "timestamp": 1704067200 }` or similar
+**Response (200):** `{ "as_of_time": "2025-01-15T12:00:00Z" }` (date-time when user data was last validated; sync with GetBalance, GetOrders, GetFills, GetPositions)
 
 ---
 
@@ -355,8 +356,14 @@ data = await markets.get_market_candlesticks(
 
 **Usage:**
 ```python
-data = await markets.get_series(client, "KXBTC")
+data = await markets.get_series(client, "KXBTC", include_volume=False)
 ```
+
+**Query parameters**
+
+| Parameter        | Type | Description                                  |
+|------------------|------|----------------------------------------------|
+| `include_volume` | bool | If true, includes total volume for the series|
 
 **Response (200):**
 ```json
@@ -378,15 +385,27 @@ data = await markets.get_series(client, "KXBTC")
 
 **Usage:**
 ```python
-data = await markets.get_series_list(client, limit=20, cursor=None)
+data = await markets.get_series_list(
+    client,
+    limit=20,
+    cursor=None,
+    category=None,
+    tags=None,
+    include_product_metadata=False,
+    include_volume=False,
+)
 ```
 
 **Query parameters**
 
-| Parameter | Type | Description       |
-|-----------|------|-------------------|
-| `limit`   | int  | Per page          |
-| `cursor`  | str  | Pagination cursor |
+| Parameter                 | Type | Description                                    |
+|---------------------------|------|------------------------------------------------|
+| `limit`                   | int  | Per page                                      |
+| `cursor`                  | str  | Pagination cursor                             |
+| `category`                | str  | Filter by category                            |
+| `tags`                    | str  | Filter by tags                                |
+| `include_product_metadata`| bool | Include product metadata in each series       |
+| `include_volume`          | bool | Include total volume for each series          |
 
 **Response (200):**
 ```json
@@ -405,6 +424,8 @@ data = await markets.get_series_list(client, limit=20, cursor=None)
 **HTTP:** `GET /live-data?ticker={ticker}`  
 **Auth:** No
 
+Convenience helper using ticker. The OpenAPI spec defines `GET /live_data/{type}/milestone/{milestone_id}` and `GET /live_data/batch?milestone_ids=...`; these helpers use the ticker-based `/live-data` pattern.
+
 **Usage:**
 ```python
 data = await markets.get_live_data(client, "KXBTC-24JAN15")
@@ -418,6 +439,8 @@ data = await markets.get_live_data(client, "KXBTC-24JAN15")
 
 **HTTP:** `GET /live-data?tickers={ticker1},{ticker2},...`  
 **Auth:** No
+
+Convenience helper using comma-separated tickers. The OpenAPI spec defines `GET /live_data/batch` with `milestone_ids`; this helper uses the ticker-based `/live-data` pattern.
 
 **Usage:**
 ```python
@@ -565,15 +588,25 @@ If `start_ts`/`end_ts` omitted, uses last 24h.
 
 **Usage:**
 ```python
-data = await events.get_multivariate_events(client, limit=100, cursor=None)
+data = await events.get_multivariate_events(
+    client,
+    limit=100,
+    cursor=None,
+    series_ticker=None,
+    collection_ticker=None,
+    with_nested_markets=False,
+)
 ```
 
 **Query parameters**
 
-| Parameter | Type | Description       |
-|-----------|------|-------------------|
-| `limit`   | int  | Per page          |
-| `cursor`  | str  | Pagination cursor |
+| Parameter             | Type | Description                              |
+|-----------------------|------|------------------------------------------|
+| `limit`               | int  | Per page (1–200, default 100)            |
+| `cursor`              | str  | Pagination cursor                        |
+| `series_ticker`       | str  | Filter by series (mutually exclusive with collection_ticker) |
+| `collection_ticker`   | str  | Filter by collection ticker              |
+| `with_nested_markets` | bool | Include markets in each event            |
 
 **Response (200):** `{ "events": [...], "cursor": "..." }` (multivariate shape per Kalshi)
 
@@ -879,6 +912,8 @@ data = await orders.decrease_order(client, "ord-abc123", reduce_to=1)
 **HTTP:** `POST /portfolio/orders/batched`  
 **Auth:** Yes
 
+Each order is validated with `CreateOrderRequest`; invalid values raise `KyroValidationError` (message includes the failing index). Same body shape as `create_order` per item.
+
 **Usage:**
 ```python
 data = await orders.batch_create_orders(client, [
@@ -889,7 +924,7 @@ data = await orders.batch_create_orders(client, [
 
 **Body:** `{ "orders": [ { ... }, ... ] }` — each object same shape as `create_order`.
 
-**Response (200):** `{ "orders": [ { ... }, ... ] }`
+**Response (201):** `{ "orders": [ { "client_order_id"?, "order"?, "error"? }, ... ] }` per Kalshi
 
 ---
 
@@ -966,19 +1001,21 @@ data = await portfolio.get_positions(
     ticker=None,
     event_ticker=None,
     subaccount=None,
+    settlement_status=None,
 )
 ```
 
 **Query parameters**
 
-| Parameter      | Type | Description                                |
-|----------------|------|--------------------------------------------|
-| `cursor`       | str  | Pagination cursor                          |
-| `limit`        | int  | Per page (1–1000)                          |
-| `count_filter` | str  | `position`, `total_traded` (comma-separated)|
-| `ticker`       | str  | Filter by market ticker                    |
-| `event_ticker` | str  | Filter by event ticker                     |
-| `subaccount`   | int  | Filter by subaccount                       |
+| Parameter          | Type | Description                                |
+|--------------------|------|--------------------------------------------|
+| `cursor`           | str  | Pagination cursor                          |
+| `limit`            | int  | Per page (1–1000)                          |
+| `count_filter`     | str  | `position`, `total_traded` (comma-separated)|
+| `ticker`           | str  | Filter by market ticker                    |
+| `event_ticker`     | str  | Filter by event ticker                     |
+| `subaccount`       | int  | Filter by subaccount                       |
+| `settlement_status`| str  | `all`, `unsettled`, `settled` (default unsettled) |
 
 **Response (200):**
 ```json
@@ -1013,6 +1050,7 @@ data = await portfolio.get_positions(
 data = await portfolio.get_fills(
     client,
     ticker=None,
+    order_id=None,
     event_ticker=None,
     min_ts=None,
     max_ts=None,
@@ -1027,6 +1065,7 @@ data = await portfolio.get_fills(
 | Parameter      | Type | Description             |
 |----------------|------|-------------------------|
 | `ticker`       | str  | Filter by market        |
+| `order_id`     | str  | Filter by order ID      |
 | `event_ticker` | str  | Filter by event         |
 | `min_ts`       | int  | Min time (Unix)         |
 | `max_ts`       | int  | Max time (Unix)         |
@@ -1053,11 +1092,19 @@ data = await portfolio.get_settlements(
     max_ts=None,
     limit=100,
     cursor=None,
-    subaccount=None,
 )
 ```
 
-**Query parameters:** same as `get_fills`.
+**Query parameters**
+
+| Parameter      | Type | Description             |
+|----------------|------|-------------------------|
+| `ticker`       | str  | Filter by market        |
+| `event_ticker` | str  | Filter by event         |
+| `min_ts`       | int  | Min time (Unix)         |
+| `max_ts`       | int  | Max time (Unix)         |
+| `limit`        | int  | Per page                |
+| `cursor`       | str  | Pagination cursor       |
 
 **Response (200):** `{ "settlements": [...], "cursor": "..." }`
 
@@ -1084,43 +1131,40 @@ data = await portfolio.get_total_resting_order_value(client)
 
 **Usage:**
 ```python
-data = await portfolio.create_subaccount(client, nickname="trading-1")
+data = await portfolio.create_subaccount(client)
 ```
 
-**Body parameters**
-
-| Parameter  | Type | Description     |
-|------------|------|-----------------|
-| `nickname` | str  | Optional label  |
-
-**Response (200):** `{ "subaccount": { ... } }` per Kalshi
+No request body (OpenAPI). **Response (201):** `{ "subaccount_number": 1 }` (1–32)
 
 ---
 
 ### `transfer_between_subaccounts`
 
-**HTTP:** `POST /portfolio/transfers`  
+**HTTP:** `POST /portfolio/subaccounts/transfer`  
 **Auth:** Yes
 
 **Usage:**
 ```python
+import uuid
 data = await portfolio.transfer_between_subaccounts(
     client,
+    client_transfer_id=str(uuid.uuid4()),
     from_subaccount=0,
     to_subaccount=1,
-    amount=10000,
+    amount_cents=10000,
 )
 ```
 
 **Body parameters**
 
-| Parameter         | Type | Description        |
-|-------------------|------|--------------------|
-| `from_subaccount` | int  | Source (0 = main)  |
-| `to_subaccount`   | int  | Destination        |
-| `amount`          | int  | Amount in cents    |
+| Parameter           | Type | Description                          |
+|---------------------|------|--------------------------------------|
+| `client_transfer_id`| str  | Required; idempotency (e.g. UUID)    |
+| `from_subaccount`   | int  | Source 0–32 (0 = primary)            |
+| `to_subaccount`     | int  | Destination 0–32                     |
+| `amount_cents`      | int  | Amount in cents                      |
 
-**Response (200):** `{ "transfer": { ... } }` per Kalshi
+Invalid values raise `KyroValidationError`. **Response (200):** empty or transfer info per Kalshi
 
 ---
 

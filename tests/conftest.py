@@ -110,16 +110,24 @@ async def _portfolio_order_decrease(r: web.Request) -> web.Response:
     )
 
 
+async def _portfolio_batch_create(r: web.Request) -> web.Response:
+    body = await r.json()
+    orders_in = body.get("orders", [])
+    return _mk_json(
+        {"orders": [{"order": {"order_id": f"b-{i+1}"}} for i in range(len(orders_in))]}
+    )
+
+
 async def _event_candlesticks(r: web.Request) -> web.Response:
     return _mk_json({"candlesticks": []})
 
 
 async def _search_filters_by_sport(_: web.Request) -> web.Response:
-    return _mk_json({"sports": []})
+    return _mk_json({"filters_by_sports": {}, "sport_ordering": []})
 
 
 async def _search_tags_by_categories(_: web.Request) -> web.Response:
-    return _mk_json({"categories": []})
+    return _mk_json({"tags_by_categories": {}})
 
 
 async def _portfolio_summary(_: web.Request) -> web.Response:
@@ -133,7 +141,7 @@ async def _live_data(r: web.Request) -> web.Response:
 
 
 async def _exchange_user_data_timestamp(_: web.Request) -> web.Response:
-    return _mk_json({"timestamp": 1704067200})
+    return _mk_json({"as_of_time": "2025-01-15T12:00:00Z"})
 
 
 def create_kalshi_app() -> web.Application:
@@ -141,7 +149,7 @@ def create_kalshi_app() -> web.Application:
     app = web.Application()
     # Exchange
     app.router.add_get("/exchange/status", _exchange_status)
-    app.router.add_get("/exchange/user-data-timestamp", _exchange_user_data_timestamp)
+    app.router.add_get("/exchange/user_data_timestamp", _exchange_user_data_timestamp)
     # Markets
     app.router.add_get("/markets", _markets_list)
     app.router.add_get(r"/markets/{ticker}", _market_detail)
@@ -164,6 +172,7 @@ def create_kalshi_app() -> web.Application:
     app.router.add_get("/portfolio/orders", _portfolio_orders_list)
     app.router.add_get(r"/portfolio/orders/{order_id}", _portfolio_order_detail)
     app.router.add_post("/portfolio/orders", _portfolio_order_create)
+    app.router.add_post("/portfolio/orders/batched", _portfolio_batch_create)
     app.router.add_post(r"/portfolio/orders/{order_id}/decrease", _portfolio_order_decrease)
     app.router.add_delete(r"/portfolio/orders/{order_id}", _portfolio_order_delete)
     # Test helpers: empty, errors, echo, params, slow

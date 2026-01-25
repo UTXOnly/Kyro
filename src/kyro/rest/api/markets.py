@@ -144,9 +144,15 @@ async def get_market_candlesticks(
 async def get_series(
     client: RestClient,
     series_ticker: str,
+    *,
+    include_volume: bool | None = None,
 ) -> Any:
-    """Get a single series by ticker. `GET /series/{series_ticker}`."""
-    return await client.get(f"/series/{series_ticker}")
+    """Get a single series by ticker. `GET /series/{series_ticker}`.
+
+    include_volume: if true, includes total volume across all events in the series.
+    """
+    params = _clean({"include_volume": include_volume})
+    return await client.get(f"/series/{series_ticker}", params=params or None)
 
 
 async def get_series_list(
@@ -154,9 +160,25 @@ async def get_series_list(
     *,
     limit: int | None = None,
     cursor: str | None = None,
+    category: str | None = None,
+    tags: str | None = None,
+    include_product_metadata: bool | None = None,
+    include_volume: bool | None = None,
 ) -> Any:
-    """Get list of series. `GET /series`."""
-    params = _clean({"limit": limit, "cursor": cursor})
+    """Get list of series. `GET /series`.
+
+    category, tags: filters. include_product_metadata, include_volume: add those fields.
+    """
+    params = _clean(
+        {
+            "limit": limit,
+            "cursor": cursor,
+            "category": category,
+            "tags": tags,
+            "include_product_metadata": include_product_metadata,
+            "include_volume": include_volume,
+        }
+    )
     return await client.get("/series", params=params or None)
 
 
