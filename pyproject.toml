@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kyro"
-version = "0.1.1"
+version = "0.1.2"
 description = "Async Kalshi API client (aiohttp, Pydantic). Library for building apps."
 readme = "README.md"
 license = { text = "MIT" }

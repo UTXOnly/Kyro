@@ -1,8 +1,8 @@
 # Kyro API Reference
 
-Request/response documentation for every modular method: **exchange**, **markets**, **events**, **orders**, **portfolio**.
+Request/response documentation for every modular method: **exchange**, **markets**, **events**, **orders**, **portfolio**, **search**.
 
-- **Import:** `from kyro.rest import exchange, markets, events, orders, portfolio`
+- **Import:** `from kyro.rest import exchange, markets, events, orders, portfolio, search`
 - **Client:** Pass `RestClient` as the first argument: `await exchange.get_exchange_status(client)`
 - **Base path:** `{KyroConfig.base_url}` (e.g. `https://api.elections.kalshi.com/trade-api/v2`)
 - **Auth:** Endpoints marked *Auth required* need `KyroConfig(auth_headers={...})` with KALSHI-ACCESS-KEY, TIMESTAMP, SIGNATURE.
@@ -532,6 +532,32 @@ data = await events.get_event_metadata(client, "KXBTC")
 
 ---
 
+### `get_event_candlesticks`
+
+**HTTP:** `GET /series/{series_ticker}/events/{event_ticker}/candlesticks`  
+**Auth:** No
+
+**Usage:**
+```python
+data = await events.get_event_candlesticks(
+    client,
+    "KXBTC",
+    "KXBTC-24JAN15",
+    start_ts=1704067200,
+    end_ts=1704153600,
+    period_interval=60,
+    limit=24,
+)
+```
+
+If `start_ts`/`end_ts` omitted, uses last 24h.
+
+**Query:** `start_ts`, `end_ts` (Unix), `period_interval` (1|60|1440 minutes), `limit`, `include_latest_before_start`
+
+**Response (200):** `{ "candlesticks": [ { "start_ts", "end_ts", "open", "high", "low", "close", "volume" }, ... ] }` per Kalshi
+
+---
+
 ### `get_multivariate_events`
 
 **HTTP:** `GET /events/multivariate`  
@@ -550,6 +576,40 @@ data = await events.get_multivariate_events(client, limit=100, cursor=None)
 | `cursor`  | str  | Pagination cursor |
 
 **Response (200):** `{ "events": [...], "cursor": "..." }` (multivariate shape per Kalshi)
+
+---
+
+## Search
+
+No auth unless noted.
+
+---
+
+### `get_sports_filters`
+
+**HTTP:** `GET /search/filters_by_sport`  
+**Auth:** No
+
+**Usage:**
+```python
+data = await search.get_sports_filters(client)
+```
+
+**Response (200):** sport-based filter metadata for search/discovery (structure per Kalshi)
+
+---
+
+### `get_tags_by_categories`
+
+**HTTP:** `GET /search/tags_by_categories`  
+**Auth:** No
+
+**Usage:**
+```python
+data = await search.get_tags_by_categories(client)
+```
+
+**Response (200):** tags grouped by category for search/filtering (structure per Kalshi)
 
 ---
 
@@ -853,6 +913,20 @@ data = await orders.batch_cancel_orders(client, order_ids=["ord-1", "ord-2"])
 ## Portfolio
 
 All portfolio endpoints **require auth**.
+
+---
+
+### `get_portfolio`
+
+**HTTP:** `GET /portfolio`  
+**Auth:** Yes
+
+**Usage:**
+```python
+data = await portfolio.get_portfolio(client)
+```
+
+**Response (200):** portfolio summary (structure per Kalshi). If the endpoint is not available for an account, use `get_balance`, `get_positions`, `get_fills` instead.
 
 ---
 

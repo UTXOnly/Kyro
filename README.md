@@ -19,6 +19,7 @@ API areas are grouped into:
 - `exchange`
 - `markets`
 - `events`
+- `search`
 - `orders`
 - `portfolio`
 
@@ -174,7 +175,7 @@ async with RestClient(cfg) as client:
 
 | Requires auth | Endpoints |
 |---------------|-----------|
-| **No** | `exchange.get_exchange_status`, `get_exchange_announcements`, `get_exchange_schedule`, `get_series_fee_changes`; all of `markets.*` and `events.*` |
+| **No** | `exchange.get_exchange_status`, `get_exchange_announcements`, `get_exchange_schedule`, `get_series_fee_changes`; all of `markets.*`, `events.*`, and `search.*` |
 | **Yes** | `exchange.get_user_data_timestamp`; all of `orders.*` and `portfolio.*` |
 
 Without auth, public endpoints work as usual. Auth-required calls return `401` if the headers are missing or invalid.
@@ -189,18 +190,19 @@ Without auth, public endpoints work as usual. Auth-required calls return `401` i
 
 ---
 
-## Modular API (exchange, markets, events, orders, portfolio)
+## Modular API (exchange, markets, events, search, orders, portfolio)
 
 ```python
 from kyro import RestClient, KyroConfig
-from kyro.rest import exchange, markets, events, orders, portfolio
+from kyro.rest import exchange, markets, events, search, orders, portfolio
 
 async with RestClient(KyroConfig()) as client:
-    # Exchange (no auth)
+    # Exchange (no auth except get_user_data_timestamp)
     status = await exchange.get_exchange_status(client)
     await exchange.get_exchange_announcements(client)
     await exchange.get_exchange_schedule(client)
     await exchange.get_series_fee_changes(client, series_ticker="KXBTC")
+    await exchange.get_user_data_timestamp(client)  # auth
 
     # Markets — filters: series_ticker, event_ticker, status, tickers, min/max_*_ts, cursor
     ms = await markets.get_markets(
@@ -225,6 +227,8 @@ async with RestClient(KyroConfig()) as client:
         period_interval=60,
         limit=100,
     )
+    await markets.get_live_data(client, "KXBTC-24JAN15")
+    await markets.get_multiple_live_data(client, "KXBTC-24JAN15,INXD-25")
     await markets.get_series(client, "KXBTC")
     await markets.get_series_list(client, limit=20)  # cursor= for pagination
 
@@ -238,7 +242,14 @@ async with RestClient(KyroConfig()) as client:
     )
     ev = await events.get_event(client, "INXD-25", with_nested_markets=True)
     await events.get_event_metadata(client, "INXD-25")
+    await events.get_event_candlesticks(
+        client, "KXBTC", "INXD-25", period_interval=60, limit=100
+    )
     await events.get_multivariate_events(client, limit=10)
+
+    # Search (no auth)
+    await search.get_sports_filters(client)
+    await search.get_tags_by_categories(client)
 
     # Orders (auth) — filters: ticker, event_ticker, status, min_ts, max_ts, cursor, subaccount
     ords = await orders.get_orders(
@@ -258,13 +269,15 @@ async with RestClient(KyroConfig()) as client:
     await orders.amend_order(
         client, "order-id", ticker="KXBTC-24JAN15", side="yes", action="buy", yes_price=55
     )
+    await orders.decrease_order(client, "order-id", reduce_by=1)
     await orders.batch_create_orders(
         client,
         [{"ticker": "KXBTC-24JAN15", "side": "yes", "action": "buy", "count": 1, "yes_price": 50}],
     )
-    await orders.batch_cancel_orders(client, ids=["id1", "id2"])
+    await orders.batch_cancel_orders(client, order_ids=["id1", "id2"])
 
     # Portfolio (auth) — filters: ticker, event_ticker, min_ts, max_ts, cursor, subaccount
+    await portfolio.get_portfolio(client)
     bal = await portfolio.get_balance(client)
     pos = await portfolio.get_positions(
         client, ticker="KXBTC-24JAN15", limit=100
@@ -286,7 +299,7 @@ async with RestClient(KyroConfig()) as client:
 
 ## API Reference
 
-Full request/response docs for **every method** (exchange, markets, events, orders, portfolio):  
+Full request/response docs for **every method** (exchange, markets, events, search, orders, portfolio):  
 **[API_REFERENCE.md](API_REFERENCE.md)**
 
 ---
@@ -413,12 +426,13 @@ kyro/
 │   ├── _version.py
 │   ├── exceptions.py      # KyroError, KyroHTTPError, KyroTimeoutError, KyroConnectionError, KyroValidationError
 │   └── rest/
-│       ├── __init__.py    # RestClient, exchange, markets, events, orders, portfolio
+│       ├── __init__.py    # RestClient, exchange, markets, events, search, orders, portfolio
 │       ├── client.py
 │       └── api/
 │           ├── exchange.py
 │           ├── markets.py
 │           ├── events.py
+│           ├── search.py
 │           ├── orders.py
 │           └── portfolio.py
 ├── benchmarks/            # pytest-benchmark: serialization, REST client vs local mock
