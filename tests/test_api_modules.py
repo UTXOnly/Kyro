@@ -135,12 +135,6 @@ async def test_decrease_order(kyro_client: RestClient) -> None:
     assert "reduced_by" in data
 
 
-async def test_get_portfolio(kyro_client: RestClient) -> None:
-    data = await portfolio.get_portfolio(kyro_client)
-    assert "portfolio_value" in data
-    assert "balance" in data
-
-
 async def test_get_balance(kyro_client: RestClient) -> None:
     data = await portfolio.get_balance(kyro_client)
     assert "balance" in data

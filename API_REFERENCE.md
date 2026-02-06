@@ -951,20 +951,6 @@ All portfolio endpoints **require auth**.
 
 ---
 
-### `get_portfolio`
-
-**HTTP:** `GET /portfolio`  
-**Auth:** Yes
-
-**Usage:**
-```python
-data = await portfolio.get_portfolio(client)
-```
-
-**Response (200):** portfolio summary (structure per Kalshi). If the endpoint is not available for an account, use `get_balance`, `get_positions`, `get_fills` instead.
-
----
-
 ### `get_balance`
 
 **HTTP:** `GET /portfolio/balance`  

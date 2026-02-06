@@ -89,37 +89,35 @@ async def create_order(
     type: limit|market. time_in_force: fill_or_kill|good_till_canceled|immediate_or_cancel.
     yes_price/no_price 1–99 (cents). subaccount ≥ 0. Invalid values raise KyroValidationError.
     """
-    body = _clean(
-        {
-            "ticker": ticker,
-            "side": side,
-            "action": action,
-            "count": count,
-            "count_fp": count_fp,
-            "type": type,
-            "yes_price": yes_price,
-            "no_price": no_price,
-            "yes_price_dollars": yes_price_dollars,
-            "no_price_dollars": no_price_dollars,
-            "client_order_id": client_order_id,
-            "expiration_ts": expiration_ts,
-            "time_in_force": time_in_force,
-            "buy_max_cost": buy_max_cost,
-            "post_only": post_only,
-            "reduce_only": reduce_only,
-            "sell_position_floor": sell_position_floor,
-            "self_trade_prevention_type": self_trade_prevention_type,
-            "order_group_id": order_group_id,
-            "cancel_order_on_pause": cancel_order_on_pause,
-            "subaccount": subaccount,
-            **extra,
-        }
-    )
+    raw = {
+        "ticker": ticker,
+        "side": side,
+        "action": action,
+        "count": count,
+        "count_fp": count_fp,
+        "type": type,
+        "yes_price": yes_price,
+        "no_price": no_price,
+        "yes_price_dollars": yes_price_dollars,
+        "no_price_dollars": no_price_dollars,
+        "client_order_id": client_order_id,
+        "expiration_ts": expiration_ts,
+        "time_in_force": time_in_force,
+        "buy_max_cost": buy_max_cost,
+        "post_only": post_only,
+        "reduce_only": reduce_only,
+        "sell_position_floor": sell_position_floor,
+        "self_trade_prevention_type": self_trade_prevention_type,
+        "order_group_id": order_group_id,
+        "cancel_order_on_pause": cancel_order_on_pause,
+        "subaccount": subaccount,
+        **extra,
+    }
     try:
-        model = CreateOrderRequest.model_validate(body)
+        model = CreateOrderRequest.model_validate(raw)
         body = model.model_dump(exclude_none=True)
-        if getattr(model, "model_extra", None):
-            body.update(model.model_extra)
+        model_extra = getattr(model, "model_extra", None) or {}
+        body.update({k: v for k, v in model_extra.items() if v is not None})
     except ValidationError as e:
         raise KyroValidationError(
             f"Invalid create_order body: {e}", details=e.errors()

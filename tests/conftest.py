@@ -130,10 +130,6 @@ async def _search_tags_by_categories(_: web.Request) -> web.Response:
     return _mk_json({"tags_by_categories": {}})
 
 
-async def _portfolio_summary(_: web.Request) -> web.Response:
-    return _mk_json({"portfolio_value": 10000, "balance": 10000})
-
-
 async def _live_data(r: web.Request) -> web.Response:
     if "tickers" in r.query:
         return _mk_json({"tickers": r.query.get("tickers", "").split(",")})
@@ -167,7 +163,6 @@ def create_kalshi_app() -> web.Application:
     app.router.add_get("/search/filters_by_sport", _search_filters_by_sport)
     app.router.add_get("/search/tags_by_categories", _search_tags_by_categories)
     # Portfolio (auth-style; we don't enforce auth in tests)
-    app.router.add_get("/portfolio", _portfolio_summary)
     app.router.add_get("/portfolio/balance", _portfolio_balance)
     app.router.add_get("/portfolio/orders", _portfolio_orders_list)
     app.router.add_get(r"/portfolio/orders/{order_id}", _portfolio_order_detail)

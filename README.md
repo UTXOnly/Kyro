@@ -276,8 +276,7 @@ async with RestClient(KyroConfig()) as client:
     )
     await orders.batch_cancel_orders(client, order_ids=["id1", "id2"])
 
-    # Portfolio (auth) — filters: ticker, event_ticker, min_ts, max_ts, cursor, subaccount
-    await portfolio.get_portfolio(client)
+    # Portfolio (auth)
     bal = await portfolio.get_balance(client)
     pos = await portfolio.get_positions(
         client, ticker="KXBTC-24JAN15", limit=100

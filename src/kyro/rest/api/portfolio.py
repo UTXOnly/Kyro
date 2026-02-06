@@ -20,15 +20,6 @@ def _clean(params: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in params.items() if v is not None}
 
 
-async def get_portfolio(client: RestClient) -> Any:
-    """Get portfolio summary. `GET /portfolio`.
-
-    Auth required. May not be available for all accounts; prefer get_balance,
-    get_positions, get_fills for specific data.
-    """
-    return await client.get("/portfolio")
-
-
 async def get_balance(client: RestClient) -> Any:
     """Get balance and portfolio value. `GET /portfolio/balance`.
 
