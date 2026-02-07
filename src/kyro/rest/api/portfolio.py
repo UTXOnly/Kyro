@@ -1,11 +1,16 @@
 """Portfolio endpoints. Auth required.
 
-Ref: https://docs.kalshi.com/api-reference/portfolio/get-balance
+Ref: OpenAPI 3.0 / Kalshi Trade API. Paths and request bodies aligned with spec.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+
+from pydantic import ValidationError
+
+from kyro.exceptions import KyroValidationError
+from kyro.models import ApplySubaccountTransferRequest
 
 if TYPE_CHECKING:
     from kyro.rest.client import RestClient
@@ -13,15 +18,6 @@ if TYPE_CHECKING:
 
 def _clean(params: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in params.items() if v is not None}
-
-
-async def get_portfolio(client: RestClient) -> Any:
-    """Get portfolio summary. `GET /portfolio`.
-
-    Auth required. May not be available for all accounts; prefer get_balance,
-    get_positions, get_fills for specific data.
-    """
-    return await client.get("/portfolio")
 
 
 async def get_balance(client: RestClient) -> Any:
@@ -41,10 +37,12 @@ async def get_positions(
     ticker: str | None = None,
     event_ticker: str | None = None,
     subaccount: int | None = None,
+    settlement_status: str | None = None,
 ) -> Any:
     """Get positions. `GET /portfolio/positions`.
 
     count_filter: position, total_traded (comma-separated). limit 1–1000.
+    settlement_status: all, unsettled, settled (default unsettled).
     """
     params = _clean(
         {
@@ -54,6 +52,7 @@ async def get_positions(
             "ticker": ticker,
             "event_ticker": event_ticker,
             "subaccount": subaccount,
+            "settlement_status": settlement_status,
         }
     )
     return await client.get("/portfolio/positions", params=params or None)
@@ -63,6 +62,7 @@ async def get_fills(
     client: RestClient,
     *,
     ticker: str | None = None,
+    order_id: str | None = None,
     event_ticker: str | None = None,
     min_ts: int | None = None,
     max_ts: int | None = None,
@@ -70,10 +70,14 @@ async def get_fills(
     cursor: str | None = None,
     subaccount: int | None = None,
 ) -> Any:
-    """Get fill history. `GET /portfolio/fills`."""
+    """Get fill history. `GET /portfolio/fills`.
+
+    Query: ticker, order_id, event_ticker, min_ts, max_ts, limit, cursor, subaccount.
+    """
     params = _clean(
         {
             "ticker": ticker,
+            "order_id": order_id,
             "event_ticker": event_ticker,
             "min_ts": min_ts,
             "max_ts": max_ts,
@@ -94,9 +98,11 @@ async def get_settlements(
     max_ts: int | None = None,
     limit: int | None = None,
     cursor: str | None = None,
-    subaccount: int | None = None,
 ) -> Any:
-    """Get settlements. `GET /portfolio/settlements`."""
+    """Get settlements. `GET /portfolio/settlements`.
+
+    Query: ticker, event_ticker, min_ts, max_ts, limit, cursor (OpenAPI: no subaccount).
+    """
     params = _clean(
         {
             "ticker": ticker,
@@ -105,7 +111,6 @@ async def get_settlements(
             "max_ts": max_ts,
             "limit": limit,
             "cursor": cursor,
-            "subaccount": subaccount,
         }
     )
     return await client.get("/portfolio/settlements", params=params or None)
@@ -119,31 +124,40 @@ async def get_total_resting_order_value(client: RestClient) -> Any:
     return await client.get("/portfolio/summary/total_resting_order_value")
 
 
-async def create_subaccount(client: RestClient, *, nickname: str | None = None) -> Any:
-    """Create a subaccount. `POST /portfolio/subaccounts`."""
-    body = _clean({"nickname": nickname}) if nickname is not None else {}
-    return await client.post("/portfolio/subaccounts", json=body)
+async def create_subaccount(client: RestClient) -> Any:
+    """Create a subaccount. `POST /portfolio/subaccounts`.
+
+    No request body per OpenAPI. Response: subaccount_number.
+    """
+    return await client.post("/portfolio/subaccounts")
 
 
 async def transfer_between_subaccounts(
     client: RestClient,
     *,
+    client_transfer_id: str,
     from_subaccount: int,
     to_subaccount: int,
-    amount: int,
+    amount_cents: int,
 ) -> Any:
-    """Transfer between subaccounts. `POST /portfolio/transfers`.
+    """Transfer between subaccounts. `POST /portfolio/subaccounts/transfer`.
 
-    amount in cents.
+    Required: client_transfer_id (idempotency, e.g. UUID), from_subaccount (0–32),
+    to_subaccount (0–32), amount_cents. Invalid values raise KyroValidationError.
     """
-    return await client.post(
-        "/portfolio/transfers",
-        json={
-            "from_subaccount": from_subaccount,
-            "to_subaccount": to_subaccount,
-            "amount": amount,
-        },
-    )
+    try:
+        model = ApplySubaccountTransferRequest(
+            client_transfer_id=client_transfer_id,
+            from_subaccount=from_subaccount,
+            to_subaccount=to_subaccount,
+            amount_cents=amount_cents,
+        )
+        body = model.model_dump()
+    except ValidationError as e:
+        raise KyroValidationError(
+            f"Invalid transfer_between_subaccounts: {e}", details=e.errors()
+        ) from e
+    return await client.post("/portfolio/subaccounts/transfer", json=body)
 
 
 async def get_all_subaccount_balances(client: RestClient) -> Any:

@@ -62,18 +62,19 @@ class RestClient:
             raise KyroError("RestClient used outside async context manager")
         return self._session_mgr.session
 
-    def _parse_error_body(self, raw: bytes) -> tuple[Any, str | None]:
-        """Parse error response body; return (parsed, optional error_code)."""
+    def _parse_error_body(self, raw: bytes) -> tuple[Any, str | None, str | None, str | None]:
+        """Parse error body; return (parsed, error_code, message, details)."""
         try:
             data = loads(raw)
         except KyroValidationError:
-            return raw.decode("utf-8", errors="replace"), None
+            return raw.decode("utf-8", errors="replace"), None, None, None
         if isinstance(data, dict):
             code = data.get("error", data.get("error_code", data.get("code")))
-            if isinstance(code, str):
-                return data, code
-            return data, None
-        return data, None
+            err_code = code if isinstance(code, str) else None
+            msg = data.get("message") if isinstance(data.get("message"), str) else None
+            details = data.get("details") if isinstance(data.get("details"), str) else None
+            return data, err_code, msg, details
+        return data, None, None, None
 
     async def _request(
         self,
@@ -130,9 +131,14 @@ class RestClient:
             raise KyroConnectionError(str(e)) from e
 
         if status >= 400:
-            parsed, err_code = self._parse_error_body(raw)
+            parsed, err_code, err_msg, err_details = self._parse_error_body(raw)
             raise KyroHTTPError(
-                "Kalshi API error", status=status, response_body=parsed, error_code=err_code
+                "Kalshi API error",
+                status=status,
+                response_body=parsed,
+                error_code=err_code,
+                error_message=err_msg,
+                error_details=err_details,
             )
 
         if not raw:

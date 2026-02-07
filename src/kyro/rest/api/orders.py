@@ -1,11 +1,17 @@
 """Order endpoints. Auth required.
 
-Ref: https://docs.kalshi.com/api-reference/orders/create-order
+Ref: OpenAPI 3.0 / Kalshi Trade API. Request bodies are validated; invalid
+values raise KyroValidationError before the request is sent.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+
+from pydantic import ValidationError
+
+from kyro.exceptions import KyroValidationError
+from kyro.models import AmendOrderRequest, CreateOrderRequest, DecreaseOrderRequest
 
 if TYPE_CHECKING:
     from kyro.rest.client import RestClient
@@ -81,34 +87,39 @@ async def create_order(
 
     Required: ticker, side (yes|no), action (buy|sell). Provide count or count_fp.
     type: limit|market. time_in_force: fill_or_kill|good_till_canceled|immediate_or_cancel.
-    yes_price/no_price 1–99 (cents). subaccount default 0.
+    yes_price/no_price 1–99 (cents). subaccount ≥ 0. Invalid values raise KyroValidationError.
     """
-    body = _clean(
-        {
-            "ticker": ticker,
-            "side": side,
-            "action": action,
-            "count": count,
-            "count_fp": count_fp,
-            "type": type,
-            "yes_price": yes_price,
-            "no_price": no_price,
-            "yes_price_dollars": yes_price_dollars,
-            "no_price_dollars": no_price_dollars,
-            "client_order_id": client_order_id,
-            "expiration_ts": expiration_ts,
-            "time_in_force": time_in_force,
-            "buy_max_cost": buy_max_cost,
-            "post_only": post_only,
-            "reduce_only": reduce_only,
-            "sell_position_floor": sell_position_floor,
-            "self_trade_prevention_type": self_trade_prevention_type,
-            "order_group_id": order_group_id,
-            "cancel_order_on_pause": cancel_order_on_pause,
-            "subaccount": subaccount,
-            **extra,
-        }
-    )
+    raw = {
+        "ticker": ticker,
+        "side": side,
+        "action": action,
+        "count": count,
+        "count_fp": count_fp,
+        "type": type,
+        "yes_price": yes_price,
+        "no_price": no_price,
+        "yes_price_dollars": yes_price_dollars,
+        "no_price_dollars": no_price_dollars,
+        "client_order_id": client_order_id,
+        "expiration_ts": expiration_ts,
+        "time_in_force": time_in_force,
+        "buy_max_cost": buy_max_cost,
+        "post_only": post_only,
+        "reduce_only": reduce_only,
+        "sell_position_floor": sell_position_floor,
+        "self_trade_prevention_type": self_trade_prevention_type,
+        "order_group_id": order_group_id,
+        "cancel_order_on_pause": cancel_order_on_pause,
+        "subaccount": subaccount,
+        **extra,
+    }
+    try:
+        model = CreateOrderRequest.model_validate(raw)
+        body = model.model_dump(exclude_none=True)
+        model_extra = getattr(model, "model_extra", None) or {}
+        body.update({k: v for k, v in model_extra.items() if v is not None})
+    except ValidationError as e:
+        raise KyroValidationError(f"Invalid create_order body: {e}", details=e.errors()) from e
     return await client.post("/portfolio/orders", json=body)
 
 
@@ -141,8 +152,9 @@ async def amend_order(
 ) -> Any:
     """Amend an order. `POST /portfolio/orders/{order_id}/amend`.
 
-    Kalshi requires ticker, side (yes|no), action (buy|sell) plus any of:
-    yes_price, no_price, yes_price_dollars, no_price_dollars, count, count_fp, etc.
+    Required: ticker, side (yes|no), action (buy|sell). Optionally yes_price, no_price
+    (1–99), yes_price_dollars, no_price_dollars, count (≥1), count_fp, client_order_id,
+    updated_client_order_id, expiration_ts. Invalid values raise KyroValidationError.
     """
     body = _clean(
         {
@@ -161,6 +173,13 @@ async def amend_order(
             **extra,
         }
     )
+    try:
+        model = AmendOrderRequest.model_validate(body)
+        body = model.model_dump(exclude_none=True)
+        if getattr(model, "model_extra", None):
+            body.update(model.model_extra)
+    except ValidationError as e:
+        raise KyroValidationError(f"Invalid amend_order body: {e}", details=e.errors()) from e
     return await client.post(f"/portfolio/orders/{order_id}/amend", json=body)
 
 
@@ -172,12 +191,11 @@ async def decrease_order(
     reduce_by_fp: str | None = None,
     reduce_to: int | None = None,
     reduce_to_fp: str | None = None,
-    **extra: Any,
 ) -> Any:
     """Decrease an order size. `POST /portfolio/orders/{order_id}/decrease`.
 
-    Provide exactly one of: (reduce_by or reduce_by_fp) or (reduce_to or reduce_to_fp).
-    reduce_by: contracts to reduce by; reduce_to: contracts to reduce to.
+    Exactly one of: (reduce_by or reduce_by_fp) or (reduce_to or reduce_to_fp).
+    reduce_by ≥ 1; reduce_to ≥ 0. Invalid or missing group raises KyroValidationError.
     """
     body = _clean(
         {
@@ -185,18 +203,34 @@ async def decrease_order(
             "reduce_by_fp": reduce_by_fp,
             "reduce_to": reduce_to,
             "reduce_to_fp": reduce_to_fp,
-            **extra,
         }
     )
+    try:
+        model = DecreaseOrderRequest.model_validate(body)
+        body = model.model_dump(exclude_none=True)
+    except ValidationError as e:
+        raise KyroValidationError(f"Invalid decrease_order body: {e}", details=e.errors()) from e
     return await client.post(f"/portfolio/orders/{order_id}/decrease", json=body)
 
 
 async def batch_create_orders(client: RestClient, orders: list[dict[str, Any]]) -> Any:
     """Batch create orders. `POST /portfolio/orders/batched`.
 
-    orders: list of order payloads (same shape as create_order body).
+    orders: list of order payloads (same shape as create_order body). Each item
+    is validated with CreateOrderRequest; invalid values raise KyroValidationError
+    (message includes the failing index). Response (201): {orders: [{client_order_id?, order?, error?}, ...]}.
     """
-    return await client.post("/portfolio/orders/batched", json={"orders": orders})
+    validated: list[dict[str, Any]] = []
+    for i, o in enumerate(orders):
+        try:
+            model = CreateOrderRequest.model_validate(o)
+            body = model.model_dump(exclude_none=True)
+            if getattr(model, "model_extra", None):
+                body.update(model.model_extra)
+            validated.append(body)
+        except ValidationError as e:
+            raise KyroValidationError(f"Invalid order at index {i}: {e}", details=e.errors()) from e
+    return await client.post("/portfolio/orders/batched", json={"orders": validated})
 
 
 async def batch_cancel_orders(

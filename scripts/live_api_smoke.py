@@ -51,7 +51,7 @@ DEBUG = os.environ.get("KALSHI_SMOKE_DEBUG", "").lower() in ("1", "true", "yes")
 # Path hints for failed calls. Shown when KALSHI_SMOKE_DEBUG=1.
 PATH_HINTS: dict[tuple[str, str], str] = {
     ("exchange", "get_series_fee_changes"): "GET /series/fee_changes",
-    ("exchange", "get_user_data_timestamp"): "GET /exchange/user-data-timestamp",
+    ("exchange", "get_user_data_timestamp"): "GET /exchange/user_data_timestamp",
     (
         "markets",
         "get_market_candlesticks",
@@ -75,7 +75,6 @@ PATH_HINTS: dict[tuple[str, str], str] = {
         "events",
         "get_event_candlesticks",
     ): "GET /series/{series_ticker}/events/{event_ticker}/candlesticks?start_ts=&end_ts=&period_interval=1|60|1440",
-    ("portfolio", "get_portfolio"): "GET /portfolio (may 404 for some accounts)",
 }
 
 
@@ -93,6 +92,12 @@ def _ts() -> str:
 
 def _log_json(obj: Any) -> str:
     return json.dumps(obj, indent=2, default=str)
+
+
+def _truncate(s: str, max_len: int) -> str:
+    if len(s) <= max_len:
+        return s
+    return s[: max_len - 3] + "..."
 
 
 def _resolve_request_info(request_info: dict | Callable[[dict], dict] | None, ctx: dict) -> dict:
@@ -122,6 +127,9 @@ def _write_debug(
     if method == "cancel_order":
         oid = ctx.get("order_id") or ctx.get("order_id_2")
         parts.append(f" order_id_used={oid!r}")
+    parts.append(f" request_info={_log_json(req)}")
+    if ctx:
+        parts.append(f" ctx_keys={list(ctx.keys())}")
     if is_http and hasattr(e, "response_body") and e.response_body is not None:
         rb = e.response_body
         if isinstance(rb, dict):
@@ -303,7 +311,16 @@ async def _run_and_log(
                 )
         else:
             _write_debug(log_file, module, method, req, ctx, e)
-            log_file.write(f"ERROR: {e.status} {getattr(e, 'error_code', '') or ''} {e}\n---\n\n")
+            log_file.write(f"ERROR: {e.status} {getattr(e, 'error_code', '') or ''} {e}\n")
+            # On 400/404, always log response_body (truncated) to aid diagnosis without DEBUG
+            if e.status in (400, 404) and getattr(e, "response_body", None) is not None:
+                rb = e.response_body
+                raw = _log_json(rb) if isinstance(rb, dict) else str(rb)
+                log_file.write(f"ERROR_RESPONSE: {_truncate(raw, 1200)}\n")
+            key = (module, method)
+            if key in PATH_HINTS:
+                log_file.write(f"PATH_HINT: {PATH_HINTS[key]}\n")
+            log_file.write("---\n\n")
             log_file.flush()
             results.append(Result(module, method, "fail", f"{e.status} {e.error_code or ''}"))
     except (KyroConnectionError, KyroTimeoutError) as e:
@@ -428,7 +445,6 @@ READ_ONLY: list[tuple[str, str, Any, Any]] = [
         lambda ctx: {"tickers": _ticker(ctx)},
     ),
     ("orders", "get_orders", lambda c, x: orders.get_orders(c, limit=5), {"limit": 5}),
-    ("portfolio", "get_portfolio", lambda c, x: portfolio.get_portfolio(c), {}),
     ("portfolio", "get_balance", lambda c, x: portfolio.get_balance(c), {}),
     ("portfolio", "get_positions", lambda c, x: portfolio.get_positions(c, limit=5), {"limit": 5}),
     ("portfolio", "get_fills", lambda c, x: portfolio.get_fills(c, limit=5), {"limit": 5}),
@@ -666,8 +682,7 @@ async def _batch_create(client: RestClient, ctx: dict) -> Any:
 
 
 async def _create_subaccount(client: RestClient, ctx: dict) -> Any:
-    nick = f"smoke-{int(time.time())}"
-    r = await portfolio.create_subaccount(client, nickname=nick)
+    r = await portfolio.create_subaccount(client)
     ctx["created_subaccount_id"] = (r or {}).get("subaccount_number")
     return r
 
@@ -677,7 +692,11 @@ async def _transfer_between_subaccounts(client: RestClient, ctx: dict) -> Any:
     if to_id is None:
         raise ValueError("skipped; subaccounts not enabled")
     return await portfolio.transfer_between_subaccounts(
-        client, from_subaccount=0, to_subaccount=int(to_id), amount=1
+        client,
+        client_transfer_id=f"smoke-{int(time.time())}",
+        from_subaccount=0,
+        to_subaccount=int(to_id),
+        amount_cents=1,
     )
 
 

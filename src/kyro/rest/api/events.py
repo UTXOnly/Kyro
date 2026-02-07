@@ -103,7 +103,22 @@ async def get_multivariate_events(
     *,
     limit: int | None = None,
     cursor: str | None = None,
+    series_ticker: str | None = None,
+    collection_ticker: str | None = None,
+    with_nested_markets: bool | None = None,
 ) -> Any:
-    """Get multivariate events. `GET /events/multivariate`."""
-    params = _clean({"limit": limit, "cursor": cursor})
+    """Get multivariate (combo) events. `GET /events/multivariate`.
+
+    series_ticker and collection_ticker are mutually exclusive. with_nested_markets
+    includes markets in each event.
+    """
+    params = _clean(
+        {
+            "limit": limit,
+            "cursor": cursor,
+            "series_ticker": series_ticker,
+            "collection_ticker": collection_ticker,
+            "with_nested_markets": with_nested_markets,
+        }
+    )
     return await client.get("/events/multivariate", params=params or None)

@@ -56,6 +56,7 @@ async def get_series_fee_changes(
 async def get_user_data_timestamp(client: RestClient) -> Any:
     """Get user data timestamp (for sync/consistency).
 
-    `GET /exchange/user-data-timestamp` — auth required.
+    `GET /exchange/user_data_timestamp` — auth required.
+    Response: ``as_of_time`` (date-time) per OpenAPI.
     """
-    return await client.get("/exchange/user-data-timestamp")
+    return await client.get("/exchange/user_data_timestamp")
