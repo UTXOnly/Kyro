@@ -10,7 +10,6 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-
 # --- Enums (str-valued for JSON and API compatibility) ---
 
 
@@ -103,9 +102,7 @@ class CreateOrderRequest(BaseModel):
     post_only: bool | None = None
     reduce_only: bool | None = None
     sell_position_floor: int | None = None
-    self_trade_prevention_type: str | None = Field(
-        None, pattern="^(taker_at_cross|maker)$"
-    )
+    self_trade_prevention_type: str | None = Field(None, pattern="^(taker_at_cross|maker)$")
     order_group_id: str | None = None
     cancel_order_on_pause: bool | None = None
     subaccount: int | None = Field(None, ge=0)
@@ -141,11 +138,13 @@ class DecreaseOrderRequest(BaseModel):
     reduce_to_fp: str | None = None
 
     @model_validator(mode="after")
-    def check_exactly_one_group(self) -> "DecreaseOrderRequest":
+    def check_exactly_one_group(self) -> DecreaseOrderRequest:
         reduce_by_any = self.reduce_by is not None or self.reduce_by_fp is not None
         reduce_to_any = self.reduce_to is not None or self.reduce_to_fp is not None
         if reduce_by_any and reduce_to_any:
-            raise ValueError("Provide (reduce_by or reduce_by_fp) OR (reduce_to or reduce_to_fp), not both")
+            raise ValueError(
+                "Provide (reduce_by or reduce_by_fp) OR (reduce_to or reduce_to_fp), not both"
+            )
         if not reduce_by_any and not reduce_to_any:
             raise ValueError("Provide (reduce_by or reduce_by_fp) or (reduce_to or reduce_to_fp)")
         return self

@@ -119,9 +119,7 @@ async def create_order(
         model_extra = getattr(model, "model_extra", None) or {}
         body.update({k: v for k, v in model_extra.items() if v is not None})
     except ValidationError as e:
-        raise KyroValidationError(
-            f"Invalid create_order body: {e}", details=e.errors()
-        ) from e
+        raise KyroValidationError(f"Invalid create_order body: {e}", details=e.errors()) from e
     return await client.post("/portfolio/orders", json=body)
 
 
@@ -181,9 +179,7 @@ async def amend_order(
         if getattr(model, "model_extra", None):
             body.update(model.model_extra)
     except ValidationError as e:
-        raise KyroValidationError(
-            f"Invalid amend_order body: {e}", details=e.errors()
-        ) from e
+        raise KyroValidationError(f"Invalid amend_order body: {e}", details=e.errors()) from e
     return await client.post(f"/portfolio/orders/{order_id}/amend", json=body)
 
 
@@ -213,9 +209,7 @@ async def decrease_order(
         model = DecreaseOrderRequest.model_validate(body)
         body = model.model_dump(exclude_none=True)
     except ValidationError as e:
-        raise KyroValidationError(
-            f"Invalid decrease_order body: {e}", details=e.errors()
-        ) from e
+        raise KyroValidationError(f"Invalid decrease_order body: {e}", details=e.errors()) from e
     return await client.post(f"/portfolio/orders/{order_id}/decrease", json=body)
 
 
@@ -235,9 +229,7 @@ async def batch_create_orders(client: RestClient, orders: list[dict[str, Any]]) 
                 body.update(model.model_extra)
             validated.append(body)
         except ValidationError as e:
-            raise KyroValidationError(
-                f"Invalid order at index {i}: {e}", details=e.errors()
-            ) from e
+            raise KyroValidationError(f"Invalid order at index {i}: {e}", details=e.errors()) from e
     return await client.post("/portfolio/orders/batched", json={"orders": validated})
 
 

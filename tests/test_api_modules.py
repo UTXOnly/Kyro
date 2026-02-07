@@ -151,9 +151,7 @@ async def test_create_order_invalid_side_raises(kyro_client: RestClient) -> None
 
 async def test_decrease_order_both_groups_raises(kyro_client: RestClient) -> None:
     with pytest.raises(KyroValidationError):
-        await orders.decrease_order(
-            kyro_client, "ord-123", reduce_by=1, reduce_to=0
-        )
+        await orders.decrease_order(kyro_client, "ord-123", reduce_by=1, reduce_to=0)
 
 
 async def test_decrease_order_neither_group_raises(kyro_client: RestClient) -> None:
